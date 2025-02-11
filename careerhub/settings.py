@@ -28,6 +28,7 @@ DEBUG = config('DEBUG')
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'users.CustomUsers'
 
 # Application definition
 
