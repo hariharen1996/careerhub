@@ -1,3 +1,5 @@
+{% load django_bootstrap5 %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +10,42 @@
     {% else %}
     <title>CareerHub</title>
     {% endif %}
+
+    {% bootstrap_css %}
+
+    <link rel="stylesheet" href="{% static 'job/css/style.css' %}" />
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg nav-border border border-white">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">CareerHub</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul
+              class="navbar-nav ms-auto mb-2 mb-lg-0 d-flex flex-row align-items-center gap-3 md:d-flex md:align-items-center gap-2">
+              <li class="nav-item">
+                <button class="btn btn-primary main-btn text-white">
+                    Home
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="btn btn-primary main-btn text-white">
+                    Logout
+                </button>
+              </li>
+              <li class="nav-item">
+                  <img src="https://png.pngtree.com/png-clipart/20200224/original/pngtree-cartoon-color-simple-male-avatar-png-image_5230557.jpg" alt="{{ user.username }}" class="profile-img">
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    
     {% block content %} {% endblock %}
+
+    {% bootstrap_javascript %}
 </body>
 </html>
