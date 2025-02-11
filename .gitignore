@@ -1,0 +1,49 @@
+# Ignore the .env file
+.env
+
+# Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Django specific
+*.log
+*.pot
+*.py[cod]
+*.sqlite3
+db.sqlite3
+/static
+/media
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# IDE configurations
+.vscode/
+.idea/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# pyenv
+.python-version
+
+# Coverage reports
+.coverage
+coverage.xml
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+.darglint.json
+
+# linting and formatting
+.flake8
+tox.ini
+tox/
+*.coveragerc
