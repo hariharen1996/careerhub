@@ -11,7 +11,7 @@ def register_view(request):
     else:
         forms = UserCreationForm()
 
-    return render(request,'users/register.html',{'forms':forms})
+    return render(request,'users/register.html',{'forms':forms,'title':'Register'})
 
 def login_view(request):
     if request.method == 'POST':
@@ -21,4 +21,4 @@ def login_view(request):
             return redirect('login')
     else:
         forms = LoginForm()
-    return render(request,'users/login.html',{'forms':forms})
+    return render(request,'users/login.html',{'forms':forms,'title':'Login'})
