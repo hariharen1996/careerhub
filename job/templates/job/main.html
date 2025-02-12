@@ -38,12 +38,33 @@
                 </form>
               </li>
               <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
                   <img src="https://png.pngtree.com/png-clipart/20200224/original/pngtree-cartoon-color-simple-male-avatar-png-image_5230557.jpg" alt="{{ user.username }}" class="profile-img">
+                </a>
               </li>
             </ul>
           </div>
         </div>
       </nav>
+
+
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModelLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="profileModelLabel">Profile Information</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              ...
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
+        </div>
+    </div>  
     
     <div class="container">
       {% if messages %}
@@ -59,7 +80,18 @@
         {% block content %} {% endblock %}
       </div>
     </div>
-
     {% bootstrap_javascript %}
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function(e){
+        setTimeout(() => {
+          let alertMessage = document.querySelectorAll('.message')
+          alertMessage.forEach((item) => {
+            item.style.opacity = 0;
+          })
+        },2000)
+      })
+    </script>
+
 </body>
 </html>

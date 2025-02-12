@@ -46,3 +46,44 @@ body::after {
 .main-btn{
     background: hsl(205, 86%, 17%);
 }
+
+.alert-container {
+    position: relative;
+}
+
+.message {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    animation: fade 4s forwards;
+    z-index: 10;
+    width: 100%;
+}
+
+
+@keyframes fade {
+    0% {
+        opacity: 0;
+        visibility: visible;
+    }
+
+    10% {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    90% {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+        display: none;
+    }
+}
