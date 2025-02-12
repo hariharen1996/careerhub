@@ -1,8 +1,16 @@
 {% extends 'job/main.html' %}
+{% load crispy_forms_tags %}
 {% block content %}
-<form method="post">
-    {% csrf_token %}
-    {{ forms.as_p }}
-    <button type="submit">SignUp</button>
-</form>
+<main class="register-container">
+    <div class="m-2 d-flex justify-content-center align-items-center mt-5">
+        <form method="POST" class="bg-white p-5 rounded shadow mb-5">
+            {% csrf_token %}
+            {{ forms|crispy }}
+            <button type="submit" class="btn btn-primary main-btn">SignUp</button>
+            <div class="signin-link mt-2">
+                <p>Already have an account? <a href="{% url 'login' %}">SignIn</a></p>
+            </div>
+        </form>
+    </div>
+</main>
 {% endblock %}
