@@ -2,6 +2,8 @@ from django.shortcuts import render,redirect
 from .forms import CustomUserForm,LoginForm
 from django.contrib.auth import login,authenticate,logout
 from django.contrib import messages
+from .mixins import RedirectUserMixin
+from django.contrib.auth.views import PasswordResetView,PasswordResetCompleteView,PasswordResetConfirmView,PasswordResetDoneView
 
 # Create your views here.
 def register_view(request):
@@ -41,3 +43,20 @@ def logout_view(request):
     logout(request)
     messages.warning(request,f"You have been logged out!😕")
     return redirect('login')
+
+class CustomPasswordResetView(RedirectUserMixin,PasswordResetView):
+    template_name = 'users/password_reset.html'
+
+class CustomPasswordResetCompleteView(RedirectUserMixin,PasswordResetCompleteView):
+    template_name = 'users/password_reset_complete.html'
+
+class CustomPasswordResetDoneView(RedirectUserMixin,PasswordResetDoneView):
+    template_name = 'users/password_reset_done.html'
+
+class CustomPasswordResetConfirmView(RedirectUserMixin,PasswordResetConfirmView):
+    template_name = 'users/password_reset_confirm.html'
+
+
+
+    
+
