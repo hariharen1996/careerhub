@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 from .forms import CustomUserForm,LoginForm
 from django.contrib.auth import login,authenticate,logout
+from django.contrib import messages
 
 # Create your views here.
 def register_view(request):
@@ -8,6 +9,7 @@ def register_view(request):
         forms = CustomUserForm(request.POST)
         if forms.is_valid():
             forms.save()
+            messages.success(request,f'Registered as {request.user.username}')
             return redirect('login')
     else:
         forms = CustomUserForm()
@@ -23,6 +25,7 @@ def login_view(request):
             user = authenticate(request,username=username,password=password)
             login(request,user)
             if user is not None:
+                messages.success(request,f"LoggedIn as {request.user.username}")
                 return redirect('job-home')    
     else:
         forms = LoginForm()
@@ -30,4 +33,5 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
+    messages.warning(request,f"You have been logged out!😕")
     return redirect('login')
