@@ -14,6 +14,7 @@
     {% bootstrap_css %}
 
     <link rel="stylesheet" href="{% static 'job/css/style.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg nav-border border border-white">
@@ -21,21 +22,21 @@
           <a class="navbar-brand" href="#">CareerHub</a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+            <i class="fas fa-bars text-white"></i>
           </button>
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul
               class="navbar-nav ms-auto mb-2 mb-lg-0 d-flex flex-row align-items-center gap-3 md:d-flex md:align-items-center gap-2">
               <li class="nav-item">
                 <a href="{% url 'job-home' %}"> 
-                  <button class="btn btn-primary main-btn text-white">Home</button>
+                  <button class="btn btn-primary main-btn text-white"><i class="fas fa-laptop-house"></i> Home</button>
                 </a>
               </li>
             {% if user.is_authenticated %}  
               <li class="nav-item">
                 <form action="{% url 'logout' %}" method="post">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-primary main-btn text-white">Logout</button>
+                  <button type="submit" class="btn btn-primary main-btn text-white"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </form>
               </li>
               <li class="nav-item">
@@ -83,6 +84,8 @@
       </div>
     </div>
     {% bootstrap_javascript %}
+
+    {% block scripts %} {% endblock %}
 
     <script>
       document.addEventListener('DOMContentLoaded', function(e){

@@ -1,4 +1,35 @@
 {% extends 'job/main.html' %}
 {% block content %}
-    <h1>Home Page</h1>
+    <main class="home-container">
+        <div class="main-title">
+            <h1 class="fs-3">Step into your future with <span class="text-uppercase fw-bold pop mt-2 sm:mt-0">CareerHub</span></h1>
+            <p class="fs-5">Find your dream job now</p>
+            <button class="btn btn-primary main-btn" id="profileBtn"><i class="fas fa-user-circle"></i> Profile</button>
+            <button class="btn btn-primary main-btn"><i class="fas fa-chart-line"></i> Dashboard</button>
+        </div>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const profileBtn = document.querySelector('#profileBtn')
+        profileBtn.addEventListener('click',function(){
+            console.log('clicked')
+            const profileImage = document.querySelector('.profile-img')
+            const navbarToggler = document.querySelector('.navbar-toggler')
+            
+            profileImage.classList.add('highlight-profileimg')
+
+            if(window.innerWidth < 992){
+                if(navbarToggler.getAttribute('aria-expanded') === 'false'){
+                    navbarToggler.click()
+                }
+            }
+
+            setTimeout(function(){
+                profileImage.classList.remove('highlight-profileimg')
+                navbarToggler.setAttribute('aria-expanded','true')
+            },5000)
+        })
+    </script>
 {% endblock %}
