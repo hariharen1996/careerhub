@@ -5,11 +5,14 @@ from django.contrib import messages
 
 # Create your views here.
 def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('job-home')
+    
     if request.method == 'POST':
         forms = CustomUserForm(request.POST)
         if forms.is_valid():
             forms.save()
-            messages.success(request,f'Registered as {request.user.username}')
+            messages.success(request,f'Registered Successfully!')
             return redirect('login')
     else:
         forms = CustomUserForm()
@@ -17,6 +20,9 @@ def register_view(request):
     return render(request,'users/register.html',{'forms':forms,'title':'Register'})
 
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('job-home')
+
     if request.method == 'POST':
         forms = LoginForm(request,data=request.POST)
         if forms.is_valid():
