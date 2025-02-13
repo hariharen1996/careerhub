@@ -58,6 +58,13 @@ class ApplicantProfileForm(forms.ModelForm):
         model = ApplicantProfile
         fields = ['user_image','user_bio','user_education','user_cgpa','work_experience','user_resume','user_location','user_skills']
 
+    def clean_user_skills(self):
+        skills = self.cleaned_data.get('user_skills')
+        if skills:
+            userskills = ', '.join([skill.strip() for skill in skills.split(',') if skill.strip()])
+            return userskills
+        return ''
+
 class CustomUserUpdateForm(forms.ModelForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'placeholder':'update your username'}))
     email = forms.EmailField(widget=forms.EmailInput(attrs={'placeholder':'update your email'}))

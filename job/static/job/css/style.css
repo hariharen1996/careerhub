@@ -152,3 +152,11 @@ body::after {
 
 }
 
+.profile-content p{
+    margin: 0;
+}
+
+.profile-details .profile-img {
+    width: 60px;
+    height: 60px;
+}
