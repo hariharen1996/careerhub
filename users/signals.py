@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save,post_migrate
 from django.dispatch import receiver 
 from .models import CustomUsers,ApplicantProfile
 
@@ -13,3 +13,9 @@ def save_applicant_profile(sender,instance,**kwargs):
         instance.applicantprofile.save()
     except ApplicantProfile.DoesNotExist:
         pass
+
+@receiver(post_migrate)
+def create_existing_profile(sender,**kwargs):
+    applicant_profile = CustomUsers.objects.filter(applicantprofile__isnull=True,user_type='APPLICANT')
+    for user in applicant_profile:
+        ApplicantProfile.objects.get_or_create(user=user)
