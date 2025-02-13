@@ -1,6 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
 from django import forms
-from .models import CustomUsers
+from .models import CustomUsers,ApplicantProfile
 import re
 from django.core.exceptions import ValidationError
 
@@ -52,3 +52,17 @@ class CustomUserForm(UserCreationForm):
 class LoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'placeholder':'Enter your username'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'placeholder':'Enter your password'}))
+
+class ApplicantProfileForm(forms.ModelForm):
+    class Meta:
+        model = ApplicantProfile
+        fields = ['user_image','user_bio','user_education','user_cgpa','work_experience','user_resume','user_location','user_skills']
+
+class CustomUserUpdateForm(forms.ModelForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={'placeholder':'update your username'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'placeholder':'update your email'}))
+
+    class Meta:
+        model = CustomUsers
+        fields = ['username','email']
+    

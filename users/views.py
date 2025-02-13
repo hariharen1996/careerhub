@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from .forms import CustomUserForm,LoginForm
+from .forms import CustomUserForm,LoginForm,ApplicantProfileForm,CustomUserUpdateForm
 from django.contrib.auth import login,authenticate,logout
 from django.contrib import messages
 from .mixins import RedirectUserMixin
@@ -43,6 +43,21 @@ def logout_view(request):
     logout(request)
     messages.warning(request,f"You have been logged out!😕")
     return redirect('login')
+
+def profile_view(request):
+    if request.method == 'POST':
+        applicant_profile_form = ApplicantProfileForm(request.POST,request.FILES,instance=request.user.applicantprofile)
+        customuser_form = CustomUserUpdateForm(request.POST,instance=request.user)
+        if applicant_profile_form.is_valid() and customuser_form.is_valid():
+            applicant_profile_form.save()
+            customuser_form.save()
+            messages.success(request,f"Profile details has been updated!")
+            return redirect('profile')
+    else:
+        applicant_profile_form = ApplicantProfileForm(instance=request.user.applicantprofile)
+        customuser_form = CustomUserUpdateForm(instance=request.user)
+    return render(request,'users/profile.html',{'applicant_profile_form':applicant_profile_form,'customuser_form':customuser_form})
+        
 
 class CustomPasswordResetView(RedirectUserMixin,PasswordResetView):
     template_name = 'users/password_reset.html'
