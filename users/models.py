@@ -25,6 +25,12 @@ class ApplicantProfile(models.Model):
     user_location = models.CharField(max_length=200,default='State/City')
     user_skills = models.CharField(max_length=500,blank=True,default='python,java,react')
 
+    def is_allfields_completed(self):
+        all_fields = [self.user_image,self.user_bio,self.user_education,self.user_cgpa,self.work_experience,self.user_resume,self.user_location,self.user_skills]
+        
+        return not any(fields is None or (isinstance(fields,str) and fields.strip() == '') or (isinstance(fields,list) and len(fields) == 0) for fields in all_fields)
+
+
     def __str__(self):
         return f"{self.user.username} Profile"
     

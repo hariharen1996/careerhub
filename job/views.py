@@ -10,6 +10,29 @@ def home_view(request):
 
 @login_required
 def dashboard_view(request):
+    if request.user.user_type == 'APPLICANT':
+        if hasattr(request.user,'applicantprofile'):
+            applicantprofile = request.user.applicantprofile
+            print(applicantprofile)
+            if not applicantprofile.is_allfields_completed():
+                messages.warning(request,f"Please complete you profile details to access dashboard")
+                return redirect('job-home')
+        else:
+            messages.warning(request,f"Please complete you profile details to access dashboard")
+            return redirect('job-home') 
+
+    elif request.user.user_type == 'EMPLOYER':
+        if hasattr(request.user,'employerprofile'):
+            employerprofile = request.user.employerprofile
+            print(employerprofile)
+            if not employerprofile.is_allfields_completed():
+                messages.warning(request,f"Please complete you profile details to access dashboard")
+                return redirect('job-home')
+        else:
+            messages.warning(request,f"Please complete you profile details to access dashboard")
+            return redirect('job-home') 
+    
+
     return render(request,'job/dashboard.html',{'title':'Dashboard'})
 
 @login_required

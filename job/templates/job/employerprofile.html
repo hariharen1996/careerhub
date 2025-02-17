@@ -10,7 +10,7 @@
         </div>
     </div>
     <p class="company-name mt-2"><span class="fw-bold">Company Name:</span> {{ user.employerprofile.company_name|default:"Please update company name" }} </p>
-    <p class="company-website mt-2"><span class="fw-bold">Company Website:</span> {{ user.employerprofile.company_website|default:"Please update company website" }} </p>
+    <p class="company-website mt-2"><span class="fw-bold">Company Website:</span> {{ user.employerprofile.company_website_url|default:"Please update company website" }} </p>
     <p class="company-location mt-2"><span class="fw-bold">Company Location:</span> {{ user.employerprofile.company_location|default:'Please update company location' }}</p>
     <p class="contact mt-2"><span class="fw-bold">Recruiter Contact:</span> {{ user.employerprofile.employer_contact|default:'Please update your contact number' }}</p>
     <p class="est-date mt-2"><span class="fw-bold">Established Date:</span> {{ user.employerprofile.company_startdate|default:'Please update company start date' }} </p>
