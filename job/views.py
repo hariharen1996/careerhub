@@ -1,7 +1,27 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.contrib.auth.decorators import login_required
+from .forms import EmployerProfileForm
+from django.contrib import messages
 
 # Create your views here.
 @login_required
 def home_view(request):
     return render(request,'job/home.html',{'title':'Home'})
+
+@login_required
+def dashboard_view(request):
+    return render(request,'job/dashboard.html',{'title':'Dashboard'})
+
+@login_required
+def employer_view(request):
+    if request.method == 'POST':
+        form = EmployerProfileForm(request.POST,request.FILES,instance=request.user.employerprofile)
+        if form.is_valid():
+            employer = form.save(commit=False)
+            employer.user = request.user
+            employer.save()
+            messages.success(request,'Employer profile details has been updated!')
+            return redirect('dashboard')
+    else:
+        form = EmployerProfileForm(instance=request.user.employerprofile)
+    return render(request,'job/employer.html',{'title':'EmployerProfileForm'})
