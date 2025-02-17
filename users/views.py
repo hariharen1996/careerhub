@@ -45,6 +45,9 @@ def logout_view(request):
     return redirect('login')
 
 def profile_view(request):
+    if request.user.user_type == 'EMPLOYER':
+        return redirect('job-home')
+    
     if request.method == 'POST':
         applicant_profile_form = ApplicantProfileForm(request.POST,request.FILES,instance=request.user.applicantprofile)
         customuser_form = CustomUserUpdateForm(request.POST,instance=request.user)

@@ -14,6 +14,9 @@ def dashboard_view(request):
 
 @login_required
 def employer_view(request):
+    if request.user.user_type == 'APPLICANT':
+        return redirect('job-home')
+
     if request.method == 'POST':
         form = EmployerProfileForm(request.POST,request.FILES,instance=request.user.employerprofile)
         if form.is_valid():
@@ -24,4 +27,4 @@ def employer_view(request):
             return redirect('dashboard')
     else:
         form = EmployerProfileForm(instance=request.user.employerprofile)
-    return render(request,'job/employer.html',{'title':'EmployerProfileForm'})
+    return render(request,'job/employer.html',{'form':form,'title':'EmployerProfileForm'})

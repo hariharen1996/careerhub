@@ -55,7 +55,10 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h1 class="modal-title fs-5" id="profileModelLabel">Profile Information</h1>
+              <h1 class="modal-title fs-5" id="profileModelLabel">
+                {% if user.user_type == 'APPLICANT' %} ApplicantProfile Information
+                {% else %} EmployerProfile Information {% endif %} 
+              </h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -92,9 +95,15 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+             {% if user.user_type == 'APPLICANT' %} 
               <a href="{% url 'profile' %}">
-                <button type="button" class="btn btn-primary main-btn">Edit Profile</button>
+                <button type="button" class="btn btn-primary main-btn">Edit Applicant</button>
               </a>
+             {% else %}
+             <a href="{% url 'employer' %}">
+              <button type="button" class="btn btn-primary main-btn">Edit Employer</button>
+            </a>
+            {% endif %}
             </div>
           </div>
         </div>
