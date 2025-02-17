@@ -40,9 +40,15 @@
                 </form>
               </li>
               <li class="nav-item">
+                {% if user.user_type == 'APPLICANT' %}
                 <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
                   <img src="{{ user.applicantprofile.user_image.url }}" alt="{{ user.username }}" class="profile-img">
                 </a>
+                {% else %}
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
+                  <img src="{{ user.employerprofile.employer_image.url }}" alt="{{ user.username }}" class="profile-img">
+                </a>
+                {% endif %}
               </li>
             {% endif %}  
             </ul>
@@ -56,42 +62,17 @@
           <div class="modal-content">
             <div class="modal-header">
               <h1 class="modal-title fs-5" id="profileModelLabel">
-                {% if user.user_type == 'APPLICANT' %} ApplicantProfile Information
+                {% if user.user_type == 'APPLICANT' %} Applicant Information
                 {% else %} EmployerProfile Information {% endif %} 
               </h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <div class="profile-details ">
-                <div class="d-flex align-items-center gap-2">
-                  <img src="{{ user.applicantprofile.user_image.url }}" alt="{{ user.username }}" class="profile-img">
-                  <div class="profile-content">
-                    <p class="m-0">{{ user.username }}</p>
-                    <p class="m-0">{{ user.email }}</p>
-                  </div>
-                </div>
-                <p class="bio mt-2"><span class="fw-bold">Summary:</span> {{ user.applicantprofile.user_bio }}</p>
-                <p class="education mt-2"><span class="fw-bold">Education:</span> {{ user.applicantprofile.user_education }}</p>
-                <p class="cgpa mt-2"><span class="fw-bold">CGPA:</span> {{ user.applicantprofile.user_cgpa }}</p>
-                <p class="exp mt-2"><span class="fw-bold">Work-Experience:</span> {{ user.applicantprofile.work_experience }}</p>
-                <p class="loc mt-2"><span class="fw-bold">Location:</span> {{ user.applicantprofile.user_location }}</p>
-                {% if user.applicantprofile.user_resume %}
-                <span class="fw-bold">Resume:</span>
-                <a href="{{ user.applicantprofile.user_resume.url }}" download="{{ user.applicantprofile.user_resume.name }}">Download Resume</a>
-                {% else %}
-                <p>No resume available</p>
-                {% endif %}
-                {% if user.applicantprofile.user_skills %} 
-                <p class="fw-bold mt-3">Skills:</p>
-                <ul>
-                  {% for skill in user.applicantprofile.get_user_skills %}
-                      <li>{{ skill }}</li>
-                  {% endfor %}
-                </ul>
-                {% else %}
-                 <p class="mt-3"><span class="fw-bold">Skills:</span> No Skills</p>
-                {% endif %}
-              </div>
+              {% if user.user_type == 'APPLICANT' %} 
+                 {% include 'job/applicantprofile.html' %}
+              {% else %} 
+                 {% include 'job/employerprofile.html' %}  
+              {% endif %} 
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
