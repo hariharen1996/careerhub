@@ -1,7 +1,8 @@
 from django.shortcuts import render,redirect
 from django.contrib.auth.decorators import login_required
-from .forms import EmployerProfileForm
+from .forms import EmployerProfileForm,JobForm
 from django.contrib import messages
+from .models import EmployerProfile
 
 # Create your views here.
 @login_required
@@ -51,3 +52,23 @@ def employer_view(request):
     else:
         form = EmployerProfileForm(instance=request.user.employerprofile)
     return render(request,'job/employer.html',{'form':form,'title':'EmployerProfileForm'})
+
+
+@login_required
+def create_jobs_view(request):
+    if request.user.user_type == 'APPLICANT':
+        return redirect('job-home')
+
+    if request.method == 'POST':
+        form = JobForm(request.POST,request.FILES)
+        if form.is_valid():
+            job = form.save(commit=False)
+            employer = EmployerProfile.objects.get(user=request.user)
+            job.employer = employer
+            job.save()
+            messages.success(request,'New Job has been created!')
+            return redirect('dashboard')
+    else:
+        form = JobForm()
+    
+    return render(request,'job/create_job.html',{'form':form,'title':'Job Form'})

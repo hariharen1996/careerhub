@@ -1,5 +1,5 @@
 from django import forms 
-from .models import EmployerProfile
+from .models import EmployerProfile,Jobs
 from django.core.exceptions import ValidationError
 
 class EmployerProfileForm(forms.ModelForm):
@@ -27,3 +27,16 @@ class EmployerProfileForm(forms.ModelForm):
                 raise ValidationError('Please fill the fields')
 
         return cleaned_data 
+
+class JobForm(forms.ModelForm):
+    class Meta:
+        model = Jobs 
+        fields = ['title','description','location','salary_range','work_mode','experience','application_deadline','role','number_of_openings','job_skills','status']
+
+        widgets = {
+            'application_deadline': forms.DateInput(attrs={'type':'date'}),
+            'title': forms.TextInput(attrs={'placeholder':"Enter job title"}),
+            'description': forms.Textarea(attrs={'placeholder': "Enter job description"}),
+            'location': forms.TextInput(attrs={'placeholder':"Enter job location"}),
+            'role': forms.TextInput(attrs={'placeholder':"Enter job role"}),
+        }
