@@ -11,22 +11,22 @@
             </header>
             <article class="workmode">
                 <p class="fs-4 mt-3 fw-bold">Work Mode</p>
-                <form method="get">
+                <form method="get" action="{% url 'dashboard' %}" id="workMode">
                     <select class="form-select" name="work-mode">
-                        <option selected>Select work mode</option>
-                        <option value="WFO">Work from office</option>
-                        <option value="hybrid">Hybrid</option>
-                        <option value="remote">Remote</option>
+                        <option selected value="">Select work mode</option>
+                        <option value="WFO" {% if work_mode_query == 'WFO' %}selected{% endif %}>Work from office</option>
+                        <option value="hybrid" {% if work_mode_query == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                        <option value="remote" {% if work_mode_query == 'remote' %}selected{% endif %}>Remote</option>
                     </select>
                 </form>
             </article>
             <article class="salary">
                 <p class="fs-4 mt-3 fw-bold">Salary</p>
-                <form method="get">
-                    {% for key,value in salaries %}
+                <form method="get" action="{% url 'dashboard' %}">
+                    {% for key,value in salaries %}    
                     <div class="form-check">
-                        <input class="form-check-input" name="salary_range[]" type="checkbox">
-                        <label class="form-check-label" for="salaries">{{ value }}</label>
+                        <input class="form-check-input" name="salary-range[]" type="checkbox" value="{{ key }}" {% if salary_query == key %} checked {% endif %} id="salaryRange{{ forloop.counter }}" > 
+                        <label class="form-check-label" for="salaryRange{{ forloop.counter }}">{{ value }}</label>
                     </div>
                     {% endfor %}
                     <button type="submit" class="btn btn-outline-dark mt-2"><i class="fas fa-sort-alpha-up"></i>
@@ -35,11 +35,11 @@
             </article>
             <article class="location">
                 <p class="fs-4 fw-bold mt-2">Location</p>
-                <form method="get">
+                <form method="get" action="{% url 'dashboard' %}">
                     {% for location in locations %}
                     <div class="form-check">
-                        <input class="form-check-input" name="location[]" type="checkbox">
-                        <label class="form-check-label" for="location">{{ location|title }}</label>
+                        <input class="form-check-input" name="locations[]" value="{{ location }}" {% if location_query == location %}checked{% endif %} id="location{{ forloop.counter }}" type="checkbox">
+                        <label class="form-check-label" for="location{{ forloop.counter }}">{{ location|title }}</label>
                     </div>
                     {% endfor %}
                     <button type="submit" class="btn btn-outline-dark mt-2"><i class="fas fa-sort-alpha-up"></i>
@@ -48,50 +48,123 @@
             </article>
             <article class="role">
                 <p class="fs-4 fw-bold mt-2">Role</p>
-                <form method="get">
+                <form method="get" action="{% url 'dashboard' %}" id="roles">
                     {% for role in roles %}
                     <div class="form-check">
-                        <input class="form-check-input" type="radio">
-                        <label class="form-check-label" for="role">{{ role }}</label>
+                        <input class="form-check-input" type="radio" value="{{ role }}" {% if role_query == role %}checked{% endif %} name="role" id="role{{ forloop.counter }}">
+                        <label class="form-check-label" for="role{{ forloop.counter }}">{{ role }}</label>
                     </div>
                     {% endfor %}
                 </form>
             </article>
             <article class="experience">
                 <p class="fs-4 mt-2 fw-bold">Experience</p>
-                <form method="get">
+                <form method="get" action="{% url 'dashboard' %}" id="experience">
                     <div class="form-group">
-                        <input type="range" class="form-range" name="experience" min="0" max="20">
+                        <input type="range" class="form-range" name="experience" min="0" max="20" value="{{ experience_query|default:'5' }}">
                         <div class="d-flex justify-content-between">
                             <span>0</span>
                             <span>20</span>
                         </div>
-                        <p class="mt-2">Experience: 0 years</p>
+                        <p class="mt-2"><span>{{ experience_query|default:'5' }}</span> years</p>
                     </div>
                 </form>
             </article>
             <article class="freshness pb-5">
                 <p class="fs-4 mt-2 fw-bold">Freshness</p>
-                <form method="get">
+                <form method="get" action="{% url 'dashboard' %}" id="freshness">
                     <div class="form-group">
                         <label for="timeRange" class="form-label">Select Time Range</label>
-                        <select class="form-select" id="timeRange" name="time_range">
-                            <option value="0">Freshness</option>
-                            <option value="1">Last 1 Day</option>
-                            <option value="3">Last 3 Days</option>
-                            <option value="7">Last 7 Days</option>
-                            <option value="15">Last 15 Days</option>
-                            <option value="30">Last 30 Days</option>
+                        <select class="form-select"  name="time_range">
+                            <option value="0" {% if time_range_query == '0' %} selected {% endif %}>Freshness</option>
+                            <option value="1" {% if time_range_query == '1' %} selected {% endif %}>Last 1 Day</option>
+                            <option value="3" {% if time_range_query == '3' %} selected {% endif %}>Last 3 Days</option>
+                            <option value="7" {% if time_range_query == '7' %} selected {% endif %}>Last 7 Days</option>
+                            <option value="15" {% if time_range_query == '15' %} selected {% endif %}>Last 15 Days</option>
+                            <option value="30" {% if time_range_query == '30' %} selected {% endif %}>Last 30 Days</option>
                         </select>
                     </div>
                 </form>
             </article>
         </aside>
     </div>
-    <div class="filter-nav-btn mt-4 d-flex gap-2 flex-wrap">
+    <div class="filter-nav-btn mt-4 d-flex gap-2 flex-wrap 
+    {% if user.user_type == 'Recruiter' %}
+        justify-content-center align-items-center
+    {% else %}
+        justify-content-end
+    {% endif %}">
         <button class="btn btn-outline-dark" id="filter-open">
             <i class="fas fa-filter"></i>
         </button>
+        {% if user.user_type == 'EMPLOYER' %}
+        <a href="{% url 'create-job' %}">
+            <button class="btn btn-outline-dark"><i class="fas fa-plus"></i> Create Job</button>
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="search-container mt-3">
+        <form method="get" action="{% url 'dashboard' %}">
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="search">🔍</span>
+                <input type="text" class="form-control" name="search" value=""
+                    placeholder="Enter skills/title/location" />
+            </div>
+        </form>
+    </div>
+    <div class="job-container mt-3 mb-3">
+        {% for result in jobs %}
+        <div class="m-2 card shadow border border-light p-3">
+            <header class="d-flex justify-content-start align-items-center">
+                <div>
+                    <h3 class="fs-3 fw-bold">
+                        {{ result.title }}
+                    </h3>
+                    </a>
+
+                    <p class="fs-5 text-muted">
+                        {{ result.employer.company_name }}
+                        |
+                    </p>
+                </div>
+                <img src="{{ result.employer.company_logo.url }}" alt="{{ result.employer.company_name }}" class="profile-img ms-auto" />
+            </header>
+
+            <article class="d-flex gap-4 flex-wrap">
+                <div>
+                    <span class="ml-2"><i class="fas fa-suitcase"></i></span>
+                    <span>{{ result.experience }} yrs</span>
+                </div>
+                <div>
+                    <span class="ml-2"><i class="fas fa-rupee-sign"></i></span>
+                    <span>{{ result.salary_range }}</span>
+                </div>
+                <div>
+                    <span class="ml-2"><i class="fas fa-map-marker-alt"></i></span>
+                    <span>{{ result.location }}</span>
+                </div>
+                <div>
+                    <span class="ml-2"><i class="fas fa-laptop-house"></i></span>
+                    <span>{{ result.work_mode|capfirst }}</span>
+                </div>
+
+            </article>
+            <article class="mt-2">
+                <p class="">{{ result.description|truncatechars:100 }}</p>
+                <div class="skills mt-2 d-flex gap-2 flex-wrap">
+                    {% for skill in result.get_job_skills %}
+                    <p class="text-secondary">{{ skill }} ·</p>
+                    {% endfor %}
+                </div>
+            </article>
+            <div class="time-ago">
+                {{ result.posted_time }} ago
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center">No jobs found matching your search.</p>
+        {% endfor %}
     </div>
 </main>
 {% endblock %}
@@ -101,6 +174,11 @@
     const filterOpen = document.querySelector('#filter-open')
     const filterClose = document.querySelector('.filter-close')
     const filterSidebar = document.querySelector('.filter-sidebar')
+    const workMode = document.querySelector('#workMode')
+    const roles = document.querySelector('#roles')
+    const experience = document.querySelector('#experience')
+    const freshness = document.querySelector('#freshness')
+    
 
     filterOpen.addEventListener('click', function () {
         filterSidebar.classList.add('show')
@@ -111,5 +189,23 @@
     filterClose.addEventListener('click', function () {
         filterSidebar.classList.remove('show')
     })
+
+    workMode.addEventListener('change',function(){
+        workMode.submit()
+    })
+
+    roles.addEventListener('change',function(){
+        roles.submit()
+    })
+    
+    experience.addEventListener('change',function(){
+        experience.submit()
+    })
+
+    freshness.addEventListener('change',function(){
+        freshness.submit()
+    })
+    
+    
 </script>
 {% endblock %}
