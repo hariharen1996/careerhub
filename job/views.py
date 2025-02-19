@@ -2,7 +2,7 @@ from django.shortcuts import render,redirect
 from django.contrib.auth.decorators import login_required
 from .forms import EmployerProfileForm,JobForm
 from django.contrib import messages
-from .models import EmployerProfile
+from .models import EmployerProfile,Jobs
 
 # Create your views here.
 @login_required
@@ -33,8 +33,16 @@ def dashboard_view(request):
             messages.warning(request,f"Please complete you profile details to access dashboard")
             return redirect('job-home') 
     
+    jobs = Jobs.objects.all()
+    print(jobs)
 
-    return render(request,'job/dashboard.html',{'title':'Dashboard'})
+    roles = ['Software Development', 'Software Testing', 'Devops', 'Machine Learning', 'Business Development']
+    locations = ['all', 'chennai', 'bengaluru', 'coimbatore', 'madurai', 'delhi', 'hyderabad']
+    salaries = [('0-3', '0-3 Lakhs'), ('3-6', '3-6 Lakhs'), ('6-10', '6-10 Lakhs'), ('10-15', '10-15 Lakhs'), ('15-20', '15-20 Lakhs'), ('20+', '20+ Lakhs')]
+
+    
+
+    return render(request,'job/dashboard.html',{'jobs':jobs,'title':'Dashboard','roles':roles,'salaries':salaries,'locations':locations})
 
 @login_required
 def employer_view(request):

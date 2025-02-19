@@ -1,6 +1,115 @@
 {% extends 'job/main.html' %}
 {% block content %}
-    <main class="dashboard-container">
-        <h1>Dashboard</h1>
-    </main>
+<main class="dashboard-container">
+    <div class="filter-sidebar mt-2">
+        <aside class="filter-container">
+            <div class="filter-close">
+                <i class="fas fa-times"></i>
+            </div>
+            <header class="filter-sidebar-header">
+                <h3 class="filter-sidebar-text">All Filters</h3>
+            </header>
+            <article class="workmode">
+                <p class="fs-4 mt-3 fw-bold">Work Mode</p>
+                <form method="get">
+                    <select class="form-select" name="work-mode">
+                        <option selected>Select work mode</option>
+                        <option value="WFO">Work from office</option>
+                        <option value="hybrid">Hybrid</option>
+                        <option value="remote">Remote</option>
+                    </select>
+                </form>
+            </article>
+            <article class="salary">
+                <p class="fs-4 mt-3 fw-bold">Salary</p>
+                <form method="get">
+                    {% for key,value in salaries %}
+                    <div class="form-check">
+                        <input class="form-check-input" name="salary_range[]" type="checkbox">
+                        <label class="form-check-label" for="salaries">{{ value }}</label>
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-outline-dark mt-2"><i class="fas fa-sort-alpha-up"></i>
+                        Sort</button>
+                </form>
+            </article>
+            <article class="location">
+                <p class="fs-4 fw-bold mt-2">Location</p>
+                <form method="get">
+                    {% for location in locations %}
+                    <div class="form-check">
+                        <input class="form-check-input" name="location[]" type="checkbox">
+                        <label class="form-check-label" for="location">{{ location|title }}</label>
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-outline-dark mt-2"><i class="fas fa-sort-alpha-up"></i>
+                        Sort</button>
+                </form>
+            </article>
+            <article class="role">
+                <p class="fs-4 fw-bold mt-2">Role</p>
+                <form method="get">
+                    {% for role in roles %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio">
+                        <label class="form-check-label" for="role">{{ role }}</label>
+                    </div>
+                    {% endfor %}
+                </form>
+            </article>
+            <article class="experience">
+                <p class="fs-4 mt-2 fw-bold">Experience</p>
+                <form method="get">
+                    <div class="form-group">
+                        <input type="range" class="form-range" name="experience" min="0" max="20">
+                        <div class="d-flex justify-content-between">
+                            <span>0</span>
+                            <span>20</span>
+                        </div>
+                        <p class="mt-2">Experience: 0 years</p>
+                    </div>
+                </form>
+            </article>
+            <article class="freshness pb-5">
+                <p class="fs-4 mt-2 fw-bold">Freshness</p>
+                <form method="get">
+                    <div class="form-group">
+                        <label for="timeRange" class="form-label">Select Time Range</label>
+                        <select class="form-select" id="timeRange" name="time_range">
+                            <option value="0">Freshness</option>
+                            <option value="1">Last 1 Day</option>
+                            <option value="3">Last 3 Days</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="15">Last 15 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                    </div>
+                </form>
+            </article>
+        </aside>
+    </div>
+    <div class="filter-nav-btn mt-4 d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-dark" id="filter-open">
+            <i class="fas fa-filter"></i>
+        </button>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const filterOpen = document.querySelector('#filter-open')
+    const filterClose = document.querySelector('.filter-close')
+    const filterSidebar = document.querySelector('.filter-sidebar')
+
+    filterOpen.addEventListener('click', function () {
+        filterSidebar.classList.add('show')
+        console.log('click')
+
+    })
+
+    filterClose.addEventListener('click', function () {
+        filterSidebar.classList.remove('show')
+    })
+</script>
 {% endblock %}
