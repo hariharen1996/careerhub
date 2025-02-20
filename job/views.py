@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import EmployerProfileForm,JobForm
 from django.contrib import messages
@@ -47,11 +47,8 @@ def dashboard_view(request):
     location_query = request.GET.getlist('locations[]',[])
     role_query = request.GET.get('role','')
     experience_query = request.GET.get('experience','')
-    time_range_query = request.GET.get('time_range','')
+    time_range_query = request.GET.get('time-range',0)
     current_time = timezone.now()
-    
-    print(work_mode_query)
-
 
     if search_query:
         jobs = Jobs.objects.filter(
@@ -112,24 +109,26 @@ def dashboard_view(request):
             jobs = Jobs.objects.filter(experience='10+')
     
     if time_range_query:
-        time_range = int(time_range_query)
-        if time_range == 0:
-            time_limit = current_time - timedelta(hours=1)
-        elif time_range_query == 1:
-            time_limit = current_time - timedelta(days=1)
-        elif time_range_query == 3:
-            time_limit = current_time - timedelta(days=3)
-        elif time_range_query == 7:
-            time_limit = current_time - timedelta(days=7) 
-        elif time_range_query == 15:
-            time_limit = current_time - timedelta(days=15)
-        elif time_range_query == 30:
-            time_limit = current_time - timedelta(days=30) 
-        else:
-            time_limit = current_time
-        
-        jobs = Jobs.objects.filter(posted_time__gte=time_limit)
-
+        try:
+            time_range = int(time_range_query)
+            if time_range == 0:
+                time_limit = current_time - timedelta(hours=1)
+            elif time_range_query == 1:
+                time_limit = current_time - timedelta(days=1)
+            elif time_range_query == 3:
+                time_limit = current_time - timedelta(days=3)
+            elif time_range_query == 7:
+                time_limit = current_time - timedelta(days=7) 
+            elif time_range_query == 15:
+                time_limit = current_time - timedelta(days=15)
+            elif time_range_query == 30:
+                time_limit = current_time - timedelta(days=30) 
+            else:
+                time_limit = current_time
+            
+            jobs = Jobs.objects.filter(posted_time__gte=time_limit)
+        except ValueError:
+            pass
 
     return render(request,'job/dashboard.html',{'jobs':jobs,
             'title':'Dashboard',
@@ -180,3 +179,37 @@ def create_jobs_view(request):
         form = JobForm()
     
     return render(request,'job/create_job.html',{'form':form,'title':'Job Form'})
+
+@login_required
+def update_job_view(request,id):
+    job = get_object_or_404(Jobs,id=id)
+
+    if request.user != job.employer.user:
+        messages.error(request,'You are not allowed to update this job')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = JobForm(request.POST,instance=job)
+        if form.is_valid():
+            form.save()
+            messages.success(request,'Job has been updated!')
+            return redirect('dashboard')
+    else:
+        form = JobForm(instance=job)
+    
+    return render(request,'job/create_job.html',{'form':form,'title':'Update Job Form'})
+
+@login_required
+def delete_job_view(request,id):
+    job = get_object_or_404(Jobs,id=id)
+
+    if request.user != job.employer.user:
+        messages.error(request,'You are not allowed to delete this job')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        job.delete()
+        messages.success(request,'Job deleted successfully!')
+        return redirect('dashboard')
+
+    return redirect('dashboard')
