@@ -112,3 +112,14 @@ class Jobs(models.Model):
 
     def __str__(self):
         return f"{self.title}"
+
+class SaveJobs(models.Model):
+    user = models.ForeignKey(CustomUsers,on_delete=models.CASCADE)
+    job = models.ForeignKey(Jobs,on_delete=models.CASCADE)
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user','job')
+    
+    def __str__(self):
+        return f'{self.user.username} saved {self.job.title}'

@@ -2,10 +2,11 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import EmployerProfileForm,JobForm
 from django.contrib import messages
-from .models import EmployerProfile,Jobs
+from .models import EmployerProfile,Jobs,SaveJobs
 from django.db.models import Q
 from django.utils import timezone 
 from datetime import timedelta
+from django.http import Http404
 
 # Create your views here.
 @login_required
@@ -129,6 +130,8 @@ def dashboard_view(request):
             jobs = Jobs.objects.filter(posted_time__gte=time_limit)
         except ValueError:
             pass
+    
+    saved_job_id = SaveJobs.objects.filter(user=request.user).values_list('job',flat=True)
 
     return render(request,'job/dashboard.html',{'jobs':jobs,
             'title':'Dashboard',
@@ -140,7 +143,8 @@ def dashboard_view(request):
             'location_query':location_query,
             'role_query':role_query,
             'experience_query':experience_query,
-            'time_range_query':time_range_query
+            'time_range_query':time_range_query,
+            'saved_job_id':saved_job_id
             })
 
 @login_required
@@ -213,3 +217,34 @@ def delete_job_view(request,id):
         return redirect('dashboard')
 
     return redirect('dashboard')
+
+@login_required
+def save_job(request,id):
+    try:
+        job = Jobs.objects.get(id=id)
+    except:
+        raise Http404('Job not found')
+    
+    is_job_saved = SaveJobs.objects.filter(user=request.user,job=job).first()
+
+    if is_job_saved:
+        is_job_saved.delete()
+        message = 'Job removed from saved jobs'
+    else:
+        SaveJobs.objects.create(user=request.user,job=job)
+        message = 'Job saved successfully'
+    
+    messages.info(request,message)
+
+    return redirect('dashboard')
+
+def save_jobs(request):
+    saved_jobs = SaveJobs.objects.filter(user=request.user)
+    return render(request,'job/save_jobs.html',{'saved_jobs':saved_jobs,'title':'Saved Jobs'})
+
+
+@login_required
+def job_details(request,id):
+    job = get_object_or_404(Jobs,id=id)
+    http_url = request.META.get('HTTP_REFERER','dashboard')
+    return render(request,'job/job_details.html',{'title':'Job Details','job':job,'http_url':http_url})

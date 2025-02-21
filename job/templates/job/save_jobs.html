@@ -1,0 +1,72 @@
+{% extends 'job/main.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<h1 class="mt-3 m-2 fs-2 text-center">Saved Jobs</h1>
+<a href="{% url 'dashboard' %}" class="text-decoration-none">  
+    <button class="btn btn-outline-dark"><i class="fas fa-backward"></i> Back</button>
+</a> 
+
+<div class="saved-jobs-container mt-3 mb-3">
+    {% for jobs in saved_jobs %}
+    <div class="m-2 card p-3 shadow border border-dark">
+            <header class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold fs-3">{{ jobs.job.employer.company_name }}</h3>
+                    <p class="fs-5">{{ jobs.job.title }}</p>
+                </div>
+                <img src="{{ jobs.job.employer.company_logo.url }}" alt="{{ employer.company_name }}"
+                    class="profile-img" />
+            </header>
+            <article class="d-flex gap-4 flex-wrap">
+                <div>
+                    <span class="ml-2"><i class="fas fa-suitcase"></i></span>
+                    <span>{{ jobs.job.experience }} yrs</span>
+                </div>
+                <div>
+                    <span class="ml-2"><i class="fas fa-rupee-sign"></i></span>
+                    <span>{{ jobs.job.salary_range }}</span>
+                </div>
+                <div>
+                    <span class="ml-2"><i class="fas fa-map-marker-alt"></i></span>
+                    <span>{{ jobs.job.location }}</span>
+                </div>
+                <div>
+                    <span class="ml-2"><i class="fas fa-laptop-house"></i></span>
+                    <span>{{ jobs.job.work_mode|capfirst }}</span>
+                </div>
+
+            </article>
+            <article class="mt-2">
+                <p class="">{{ jobs.job.description|truncatechars:100 }}</p>
+                <div class="skills mt-2 d-flex gap-2 flex-wrap">
+                    {% for skill in jobs.job.get_job_skills %}
+                    <p class="text-secondary">{{ skill }} .</p>
+                    {% endfor %}
+                </div>
+            </article>
+            <article class="mt-2 d-flex justify-content-between align-items-center flex-wrap">
+                <div class="time-ago">
+                    {{ jobs.job.posted_time|posted_time_ago}} ago
+                </div>
+                <div class="save-jobs mt-1">
+                    <form action="{% url 'save-job' jobs.job.id %}" method="post">
+                        {% csrf_token %}
+                        {% if job.id in saved_jobs_id %}
+                        <button type="submit" class="save-btn fs-4">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                        {% else %}
+                        <button type="submit" class="save-btn fs-4">
+                            <i class="far fa-bookmark"></i>
+                        </button>
+                        {% endif %}
+                    </form>
+                </div>
+            </article>
+    </div>
+    {% empty %}
+    <p class="text-center fs-4 fw-bold">You have no saved jobs.</p>
+    {% endfor %}
+</div>
+{% endblock %}

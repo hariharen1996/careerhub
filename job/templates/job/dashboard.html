@@ -100,6 +100,9 @@
             <button class="btn btn-outline-dark"><i class="fas fa-plus"></i> Create Job</button>
         </a>
         {% endif %}
+        <a href="{% url 'save-jobs' %}">
+            <button class="btn btn-outline-dark"><i class="fas fa-plus"></i> Save Jobs</button>
+        </a>
     </div>
 
     <div class="search-container mt-3">
@@ -113,13 +116,14 @@
     </div>
     <div class="job-container mt-3 mb-3">
         {% for result in jobs %}
-        <div class="m-2 card shadow border border-light p-3">
+        <div class="m-2 card shadow border border-dark  p-3">
             <header class="d-flex justify-content-start align-items-center">
                 <div>
+                  <a href="{% url 'job-details' id=result.id %}" class="text-decoration-none text-dark">   
                     <h3 class="fs-3 fw-bold">
                         {{ result.title }}
                     </h3>
-                    </a>
+                  </a>
 
                     <p class="fs-5 text-muted">
                         {{ result.employer.company_name }}
@@ -156,11 +160,27 @@
                     {% endfor %}
                 </div>
             </article>
-            <div class="time-ago">
-                {{ result.posted_time|posted_time_ago }} ago
-            </div>
+            <article class=" d-flex justify-content-between align-items-center flex-wrap">
+                <div class="time-ago">
+                    {{ result.posted_time|posted_time_ago }} ago
+                </div>
+                <div class="save-jobs mt-1">
+                    <form action="{% url 'save-job' result.id %}" method="post">
+                        {% csrf_token %}
+                        {% if result.id in saved_job_id %}
+                            <button type="submit" class="save-btn fs-4">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                        {% else %}
+                            <button type="submit" class="save-btn fs-4">
+                                <i class="far fa-bookmark"></i>
+                            </button>
+                        {% endif %}
+                    </form>
+                </div>
+            </article>
             {% if user.user_type == 'EMPLOYER' %}   
-            <article class="job-update-delete mt-4">
+            <article class="job-update-delete mt-1">
                 <a href="{% url 'update-job' result.id %}">
                     <button class="btn btn-outline-dark p-2"><i class="fas fa-edit"></i> Edit Jobs</button>
                 </a>
