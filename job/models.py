@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from users.models import ApplicantProfile
 
 CustomUsers = get_user_model()
 
@@ -122,4 +123,29 @@ class SaveJobs(models.Model):
         unique_together = ('user','job')
     
     def __str__(self):
-        return f'{self.user.username} saved {self.job.title}'
+        return f'{self.user.username} saved {self.job.title}' 
+
+class JobApplicationSkills(models.Model):
+    job_application_skills = models.CharField(max_length=200)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['job_application_skills'],name='unique_job_skills')
+        ]
+
+    def __str__(self):
+        return self.job_application_skills
+
+
+class JobApplications(models.Model):
+    applicant = models.ForeignKey(CustomUsers,on_delete=models.CASCADE)
+    job = models.ForeignKey(Jobs,on_delete=models.CASCADE)
+    profile = models.ForeignKey(ApplicantProfile,on_delete=models.CASCADE)
+    applied_at = models.DateTimeField(auto_now_add=True)
+    JobApplications_skills = models.ManyToManyField(JobApplicationSkills,related_name='job_applications',blank=True)
+
+    class Meta:
+        unique_together = ('applicant','job')
+    
+    def __str__(self):
+        return f"{self.applicant.username} applied for {self.job.title}"

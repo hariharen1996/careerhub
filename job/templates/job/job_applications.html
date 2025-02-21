@@ -1,0 +1,93 @@
+{% extends 'job/main.html' %}
+{% block content %}
+<main class="job-form">
+    <h1 class="mt-3 m-2 fs-2 text-center">
+        Job Applications
+    </h1>
+    <a href="{% url 'dashboard' %}" class="text-decoration-none">  
+        <button class="btn btn-outline-dark"><i class="fas fa-backward"></i> Back</button>
+    </a> 
+    <div class="table-responsive">
+        <table class="table table-bordered shadow mt-2">
+            <thead>
+                <tr>
+                    <th class="text-nowrap">Applicant</th>
+                    <th class="text-nowrap" colspan="4">Company Details (Applied for)</th>
+                    <th class="text-nowrap" colspan="2">Employer Details</th>
+                    <th class="text-nowrap w-full" colspan="11">Profile Details</th>
+                </tr>
+                <tr>
+                    <th class="text-nowrap"></th>
+                    <th class="text-nowrap">Company Name</th>
+                    <th class="text-nowrap">Company Location</th>
+                    <th class="text-nowrap">Skills Required</th>
+                    <th class="text-nowrap">Job Title</th>
+                    <th class="text-nowrap">Employer Email</th>
+                    <th class="text-nowrap">Employer Contact</th>
+                    <th class="text-nowrap">Name</th>
+                    <th class="text-nowrap">Email</th>
+                    <th class="text-nowrap">Education</th>
+                    <th class="text-nowrap">CGPA</th>
+                    <th class="text-nowrap">Experience</th>
+                    <th class="text-nowrap">Location</th>
+                    <th class="text-nowrap">Resume</th>
+                    <th class="text-nowrap"> Applicant's Skills</th>
+                    <th class="text-nowrap">Applied On</th>
+                    {% if user.user_type == 'APPLICANT' %}    
+                    <th class="text-nowrap">Update Skills</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for application in applications %}
+                <tr>
+                    <td class="text-nowrap">
+                        {% if application.profile.user_image %}
+                            <img src="{{ application.profile.user_image.url }}" alt="{{ applicant.profile.user.username }}" class="profile-img" />
+                        {% else %}
+                            <img src="../../../media/default.jpg" alt="profile-image" class="profile-img" />
+                        {% endif %}
+                    </td>
+                    <td class="text-nowrap">{{ application.job.employer.company_name }}</td>
+                    <td class="text-nowrap">{{ application.job.location }}</td>
+                    <td class="text-nowrap">
+                        {% for skill in application.job.get_job_skills %}
+                            <span>{{ skill }} |</span>
+                        {% empty %}
+                            <p>No Skills Available</p>
+                        {% endfor %}
+                    </td>
+                    <td class="text-nowrap">{{ application.job.title }}</td>
+                    <td class="text-nowrap">{{ application.job.employer.employer_email }}</td>
+                    <td class="text-nowrap">{{ application.job.employer.employer_contact }}</td>
+                    <td class="text-nowrap">{{ application.profile.user.username }}</td>
+                    <td class="text-nowrap">{{ application.profile.user.email }}</td>
+                    <td class="text-nowrap">{{ application.profile.user_education }}</td>
+                    <td class="text-nowrap">{{ application.profile.user_cgpa }}</td>
+                    <td class="text-nowrap">{{ application.profile.work_experience }}</td>
+                    <td class="text-nowrap">{{ application.profile.user_location }}</td>
+                    <td class="text-nowrap">
+                        <a href="{{ application.profile.resume.url }}" download="{{ application.profile.resume.name }}">Download Resume</a>
+                    </td>
+                    <td class="text-nowrap">
+                        {% for skill in application.JobApplications_skills.all %}
+                            <span>{{ skill }} |</span>
+                        {% empty %}
+                            <p>No Skills Available</p>
+                        {% endfor %}
+                    </td>
+                    <td class="text-nowrap">{{ application.applied_at }}</td>
+                    {% if user.user_type == 'APPLICANT' %}   
+                    <td class="text-nowrap">
+                        <a href="{% url 'update-application-skills' id=application.id %}" class="btn btn-outline-primary btn-sm">
+                            Add|update Skills
+                        </a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}

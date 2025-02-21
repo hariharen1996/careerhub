@@ -1,12 +1,17 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .forms import EmployerProfileForm,JobForm
+from .forms import EmployerProfileForm,JobForm,UpdateJobApplicationForm
 from django.contrib import messages
-from .models import EmployerProfile,Jobs,SaveJobs
+from .models import EmployerProfile,Jobs,SaveJobs,JobApplications
 from django.db.models import Q
 from django.utils import timezone 
 from datetime import timedelta
 from django.http import Http404
+from users.models import ApplicantProfile
+from django.core.mail import send_mail,EmailMessage
+from django.conf import settings
+import mimetypes
+from django.core.exceptions import ObjectDoesNotExist
 
 # Create your views here.
 @login_required
@@ -248,3 +253,95 @@ def job_details(request,id):
     job = get_object_or_404(Jobs,id=id)
     http_url = request.META.get('HTTP_REFERER','dashboard')
     return render(request,'job/job_details.html',{'title':'Job Details','job':job,'http_url':http_url})
+
+
+@login_required
+def apply_jobs(request,id):
+    if not request.user.is_authenticated:  
+        messages.error(request,"You need to be logged in to apply for job")
+        return redirect('job-home')
+    
+    job = get_object_or_404(Jobs,id=id)
+    profile = get_object_or_404(ApplicantProfile,user=request.user)
+    employers = job.employer
+
+    if job.application_deadline > timezone.now().date():
+        pass 
+    else:
+        messages.warning(request,f'Application deadline for this job {job.title} has passed')
+        return redirect('dashboard')
+
+    if JobApplications.objects.filter(applicant=request.user,job__employer=employers).exists():
+        messages.warning(request,f"You have already applied for a job at {employers.company_name} company")
+        return redirect('dashboard')
+
+    if JobApplications.objects.filter(applicant=request.user,job=job).exists():
+        messages.warning(request,"You cant apply multiple times for same specific job")
+        return redirect('dashboard')
+    
+    JobApplications.objects.create(applicant=request.user,job=job,profile=profile)
+
+    subject_applicant = f"Job Application Confirmation for {job.title}"
+    message_applicant = f"Dear {request.user.username},\n\n" \
+                        f"Your application for the job '{job.title}' at {employers.company_name} has been successfully submitted.\n" \
+                        f"Best of luck with your application!\n\n" \
+                        f"Regards,\nCareerHub Team"
+    recipient_applicant = request.user.email
+    send_mail(subject_applicant, message_applicant, settings.DEFAULT_FROM_EMAIL, [recipient_applicant])
+
+    subject_employer = f"New Job Application for {job.title}"
+    message_employer = f"Dear {employers.user.username},\n\n" \
+                       f"New application has been received for the job '{job.title}' from {request.user.username}.\n" \
+                       f"Applicant's email: {request.user.email}\n" \
+                       f"Profile details: {profile}\n\n" \
+                       f"Regards,\nCaeerHub Team"
+    recipient_employer = employers.employer_email  
+
+    try:
+        resumefile = profile.user_resume
+        email = EmailMessage(
+            subject_employer,
+            message_employer,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_employer]
+        )
+
+        if resumefile:
+            mime_type, _ = mimetypes.guess_type(resumefile.name)
+            if mime_type is None:
+                mime_type = 'application/octet-stream'
+            
+            email.attach(resumefile.name, resumefile.read(), mime_type)
+        
+        email.send()
+    except ObjectDoesNotExist:
+        messages.error(request, "Error: Profile does not have a resume attached.")
+        return redirect('dashboard')
+
+    messages.success(request,f"Your application for {job.title} has been submitted successfully")
+    return redirect('dashboard')
+
+
+@login_required
+def job_applications(request):
+    jobs = JobApplications.objects.all()
+    return render(request,'job/job_applications.html',{'applications':jobs})
+
+
+@login_required
+def update_application_skills(request,id):
+    if request.user.user_type == 'EMPLOYER':
+        return redirect('dashboard')
+
+    job_applications = get_object_or_404(JobApplications,id=id,applicant=request.user)
+
+    if request.method == 'POST':
+        form = UpdateJobApplicationForm(request.POST,instance=job_applications)
+        if form.is_valid():
+            form.save()
+            messages.success(request,"Your skills have been updated successfully")
+            return redirect('job-applications')
+    else:
+        form = UpdateJobApplicationForm(instance=job_applications)
+    
+    return render(request,'job/update_application_skills.html',{'form':form,'job_application':job_applications})
