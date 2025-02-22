@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'job',
     'django_bootstrap5',
     'crispy_bootstrap5',
-    'crispy_forms'
+    'crispy_forms',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
