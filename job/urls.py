@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views 
+from . import apiviews
 
 urlpatterns = [
     path('',views.home_view,name='job-home'),
@@ -14,4 +15,6 @@ urlpatterns = [
     path('apply-jobs/<int:id>/',views.apply_jobs,name='apply-jobs'),
     path('job-applications/',views.job_applications,name='job-applications'),
     path('update-application-skills/<int:id>/',views.update_application_skills,name='update-application-skills'),
+
+    path('api/dashboard-api/',apiviews.dashboard_api_view,name='dashboard-api')
 ]

@@ -46,109 +46,13 @@ def dashboard_view(request):
     locations = ['all', 'chennai', 'bengaluru', 'coimbatore', 'madurai', 'delhi', 'hyderabad']
     salaries_data = [('0-3', '0-3 Lakhs'), ('3-6', '3-6 Lakhs'), ('6-10', '6-10 Lakhs'), ('10-15', '10-15 Lakhs'), ('15-20', '15-20 Lakhs'), ('20+', '20+ Lakhs')]
 
-
-    search_query = request.GET.get('search','')
-    work_mode_query = request.GET.get('work-mode','')
-    salary_query = request.GET.getlist('salary-range[]',[])
-    location_query = request.GET.getlist('locations[]',[])
-    role_query = request.GET.get('role','')
-    experience_query = request.GET.get('experience','')
-    time_range_query = request.GET.get('time-range',0)
-    current_time = timezone.now()
-
-    if search_query:
-        jobs = Jobs.objects.filter(
-            Q(title__icontains=search_query) | 
-            Q(location__icontains=search_query) | 
-            Q(job_skills__icontains=search_query)
-        ).distinct()
-    
-    else:
-        jobs = Jobs.objects.all()
-    
-    if work_mode_query:
-        jobs = Jobs.objects.filter(work_mode=work_mode_query)
-
-    if salary_query:
-        salary = Q()
-        for salaries in salary_query:
-            if salaries == '0-3':
-                salary |= Q(min_salary__gte=0,max_salary__lte=3)
-            if salaries == '3-6':
-                salary |= Q(min_salary__gte=3,max_salary__lte=6)
-            if salaries == '6-10':
-                salary |= Q(min_salary__gte=6,max_salary__lte=10)
-            if salaries == '10-15':
-                salary |= Q(min_salary__gte=10,max_salary__lte=15)
-            if salaries == '15-20':
-                salary |= Q(min_salary__gte=15,max_salary__lte=20)
-            if salaries == '20+':
-                salary |= Q(min_salary__gte=20)
-        
-        if salary:
-            jobs = Jobs.objects.filter(salary)
-    
-    if location_query:
-        location_filter = Q()
-
-        if 'all' not in location_filter:
-            for loc in location_query:
-                location_filter |= Q(location__icontains=loc)
-        jobs = Jobs.objects.filter(location_filter)
-
-    if role_query:
-        jobs = Jobs.objects.filter(role__icontains=role_query)
-
-    if experience_query:
-        experience = int(experience_query)
-        if experience <= 1:
-            jobs = Jobs.objects.filter(experience='0-1')
-        elif experience <= 3:
-            jobs = Jobs.objects.filter(experience='1-3')
-        elif experience <= 5:
-            jobs = Jobs.objects.filter(experience='3-5')
-        elif experience <= 7:
-            jobs = Jobs.objects.filter(experience='5-7')
-        elif experience <= 10:
-            jobs = Jobs.objects.filter(experience='7-10')
-        else:
-            jobs = Jobs.objects.filter(experience='10+')
-    
-    if time_range_query:
-        try:
-            time_range = int(time_range_query)
-            if time_range == 0:
-                time_limit = current_time - timedelta(hours=1)
-            elif time_range_query == 1:
-                time_limit = current_time - timedelta(days=1)
-            elif time_range_query == 3:
-                time_limit = current_time - timedelta(days=3)
-            elif time_range_query == 7:
-                time_limit = current_time - timedelta(days=7) 
-            elif time_range_query == 15:
-                time_limit = current_time - timedelta(days=15)
-            elif time_range_query == 30:
-                time_limit = current_time - timedelta(days=30) 
-            else:
-                time_limit = current_time
-            
-            jobs = Jobs.objects.filter(posted_time__gte=time_limit)
-        except ValueError:
-            pass
-    
     saved_job_id = SaveJobs.objects.filter(user=request.user).values_list('job',flat=True)
 
-    return render(request,'job/dashboard.html',{'jobs':jobs,
+    return render(request,'job/dashboard.html',{
             'title':'Dashboard',
             'roles':roles,
             'salaries':salaries_data,
             'locations':locations,
-            'work_mode_query':work_mode_query,
-            'salary_query':salary_query,
-            'location_query':location_query,
-            'role_query':role_query,
-            'experience_query':experience_query,
-            'time_range_query':time_range_query,
             'saved_job_id':saved_job_id
             })
 
