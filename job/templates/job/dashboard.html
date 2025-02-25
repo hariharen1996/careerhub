@@ -73,12 +73,13 @@
                     </div>
                 </form>
             </article>
+            {{ time_range_query }}
             <article class="freshness pb-5">
                 <p class="fs-4 mt-2 fw-bold">Freshness</p>
                 <form action="{% url 'dashboard' %}" method="get" id="freshnessSubmit">   
                     <div class="form-group">
                         <label for="timeRange" class="form-label">Select Time Range</label>
-                        <select class="form-select" id="timeRange" name="time_range">
+                        <select class="form-select" id="timeRange" name="time-range">
                             <option value="0" {% if time_range_query == '0' %} selected {% endif %}>Freshness</option>
                             <option value="1" {% if time_range_query == '1' %} selected {% endif %}>Last 1 Day</option>
                             <option value="3" {% if time_range_query == '3' %} selected {% endif %}>Last 3 Days</option>
@@ -130,11 +131,11 @@
                   </a>
 
                     <p class="fs-5 text-muted">
-                        {{ result.employer.company_name }}
+                        {{ result.company_name }}
                         |
                     </p>
                 </div>
-                <img src="{{ result.employer.company_logo.url }}" alt="{{ result.employer.company_name }}" class="profile-img ms-auto" />
+                <img src="{{ result.company_logo }}" alt="{{ result.company_name }}" class="profile-img ms-auto" />
             </header>
 
             <article class="d-flex gap-4 flex-wrap">
@@ -159,9 +160,7 @@
             <article class="mt-2">
                 <p class="">{{ result.description|truncatechars:100 }}</p>
                 <div class="skills mt-2 d-flex gap-2 flex-wrap">
-                    {% for skill in result.get_job_skills %}
-                    <p class="text-secondary">{{ skill }} ·</p>
-                    {% endfor %}
+                    <p class="text-secondary">{{ result.job_skills }}</p>
                 </div>
             </article>
             <article class=" d-flex justify-content-between align-items-center flex-wrap">
@@ -196,6 +195,43 @@
         <p class="text-center">No jobs found matching your search.</p>
         {% endfor %}
     </div>
+    
+    <div class="pagination">
+        <nav aria-label="Page navigation">
+            <ul class="pagination border border-secondary rounded shadow justify-content-center align-items-center flex-wrap">
+                {% if jobs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if work_mode_query %}&work_mode={{ work_mode_query }}{% endif %}{% if salary_range_query %}&salary_range[]={{ salary_range_query|join:'&salary_range[]=' }}{% endif %}{% if location_query %}&location[]={{ location_query|join:'&location[]=' }}{% endif %}{% if role_query %}&role={{ role_query }}{% endif %}{% if experience_query %}&experience={{ experience_query }}{% endif %}{% if time_range_query %}&time_range={{ time_range_query }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">First</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ jobs.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if work_mode_query %}&work_mode={{ work_mode_query }}{% endif %}{% if salary_range_query %}&salary_range[]={{ salary_range_query|join:'&salary_range[]=' }}{% endif %}{% if location_query %}&location[]={{ location_query|join:'&location[]=' }}{% endif %}{% if role_query %}&role={{ role_query }}{% endif %}{% if experience_query %}&experience={{ experience_query }}{% endif %}{% if time_range_query %}&time_range={{ time_range_query }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true"><i class="fas fa-step-backward"></i></span>
+                        </a>
+                    </li>
+                {% endif %}
+    
+                <li class="page-item disabled">
+                    <span class="page-link bg-light text-black">Page {{ jobs.number }} of {{ jobs.paginator.num_pages }}</span>
+                </li>
+    
+                {% if jobs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ jobs.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if work_mode_query %}&work_mode={{ work_mode_query }}{% endif %}{% if salary_range_query %}&salary_range[]={{ salary_range_query|join:'&salary_range[]=' }}{% endif %}{% if location_query %}&location[]={{ location_query|join:'&location[]=' }}{% endif %}{% if role_query %}&role={{ role_query }}{% endif %}{% if experience_query %}&experience={{ experience_query }}{% endif %}{% if time_range_query %}&time_range={{ time_range_query }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true"><i class="fas fa-step-forward"></i></span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ jobs.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if work_mode_query %}&work_mode={{ work_mode_query }}{% endif %}{% if salary_range_query %}&salary_range[]={{ salary_range_query|join:'&salary_range[]=' }}{% endif %}{% if location_query %}&location[]={{ location_query|join:'&location[]=' }}{% endif %}{% if role_query %}&role={{ role_query }}{% endif %}{% if experience_query %}&experience={{ experience_query }}{% endif %}{% if time_range_query %}&time_range={{ time_range_query }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">Last</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>  
+
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

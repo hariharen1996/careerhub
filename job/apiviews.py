@@ -17,9 +17,10 @@ def dashboard_api_view(request):
     experience_query = request.GET.get('experience','')
     time_range_query = request.GET.get('time-range',0)
     current_time = timezone.now()
-    page_number = request.GET.get('page',None)
+    page_number = request.GET.get('page',None)    
 
-
+    print(time_range_query)
+   
     jobs = Jobs.objects.all()
 
     if search_query:
@@ -77,10 +78,11 @@ def dashboard_api_view(request):
         else:
             jobs = jobs.filter(experience='10+')
     
+
     if time_range_query:
         try:
-            time_range = int(time_range_query)
-            if time_range == 0:
+            time_range_query = int(time_range_query)
+            if time_range_query == 0:
                 time_limit = current_time - timedelta(hours=1)
             elif time_range_query == 1:
                 time_limit = current_time - timedelta(days=1)
@@ -95,19 +97,27 @@ def dashboard_api_view(request):
             else:
                 time_limit = current_time
             
+            print(f"timelimit: {time_limit}")
             jobs = jobs.filter(posted_time__gte=time_limit)
         except ValueError:
             pass
 
+    if not page_number:
+        serializer = JobSerializer(jobs,many=True)
+        return Response({
+            'jobs':serializer.data,
+        })
+    else:
+        paginator = Paginator(jobs,5)
+        page_data = paginator.get_page(page_number)
+        start_index = page_data.start_index()
+        end_index = page_data.end_index()
 
-    paginator = Paginator(jobs,5)
-    page_data = paginator.get_page(page_number)        
-    serializer = JobSerializer(page_data,many=True)
-    return Response({
-        'jobs': serializer.data,
-        'start_index': page_data.start_index(),
-        'end_index': page_data.end_index(),
-        'page_number': page_number,
-        'total_pages': paginator.num_pages,
-    })
-
+        serializer = JobSerializer(page_data,many=True)
+        
+        return Response({
+            'jobs':serializer.data,
+            'start_index':start_index,
+            'end_index':end_index,
+            'page_number':page_number,
+        })

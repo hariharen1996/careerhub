@@ -12,6 +12,8 @@ from django.core.mail import send_mail,EmailMessage
 from django.conf import settings
 import mimetypes
 from django.core.exceptions import ObjectDoesNotExist
+import requests
+from django.core.paginator import Paginator,EmptyPage,InvalidPage
 
 # Create your views here.
 @login_required
@@ -42,6 +44,55 @@ def dashboard_view(request):
             messages.warning(request,f"Please complete you profile details to access dashboard")
             return redirect('job-home') 
     
+    url = 'http://127.0.0.1:8000/api/dashboard-api/'
+
+    params = {
+        'search':request.GET.get('search',''),
+        'work_mode': request.GET.get('work-mode',''),
+        'salary_range[]': request.GET.getlist('salary-range[]', []),
+        'location[]': request.GET.getlist('locations[]', []),
+        'role': request.GET.get('role', ''),
+        'experience': request.GET.get('experience', ''),
+        'time_range': request.GET.get('time-range', 0),
+    }
+
+    print(params['time_range'])
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status() 
+        api_response = response.json()  
+        job_data = api_response.get('jobs', []) 
+        if params['work_mode']:
+            job_data = [job for job in job_data if job['work_mode'].lower() == params['work_mode'].lower()]
+        if params['salary_range[]']:
+            job_data = [job for job in job_data if job['salary_range'] in params['salary_range[]'] or not params['salary_range[]']]
+        if params['location[]']:
+            job_data = [job for job in job_data if job['location'].lower() in [loc.lower() for loc in params['location[]']] or not params['location[]']]
+           
+        job_data = sorted(job_data,key=lambda x: x['created_at'],reverse=True)
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from API: {e}")
+        job_data = []
+    except ValueError as e:
+        print(f"Invalid data received from API: {e}")
+        job_data = []
+
+   
+    if not job_data:
+        paginator = Paginator([], 5)  
+    else:
+        paginator = Paginator(job_data, 5) 
+
+    page_number = request.GET.get('page')
+    try:
+        page_data = paginator.get_page(page_number)
+    except (EmptyPage, InvalidPage):
+        page_data = paginator.get_page(1)
+
+    
+
+    
     roles = ['Software Development', 'Software Testing', 'Devops', 'Machine Learning', 'Business Development']
     locations = ['all', 'chennai', 'bengaluru', 'coimbatore', 'madurai', 'delhi', 'hyderabad']
     salaries_data = [('0-3', '0-3 Lakhs'), ('3-6', '3-6 Lakhs'), ('6-10', '6-10 Lakhs'), ('10-15', '10-15 Lakhs'), ('15-20', '15-20 Lakhs'), ('20+', '20+ Lakhs')]
@@ -53,7 +104,15 @@ def dashboard_view(request):
             'roles':roles,
             'salaries':salaries_data,
             'locations':locations,
-            'saved_job_id':saved_job_id
+            'saved_job_id':saved_job_id,
+            'jobs':page_data,
+            'search_query':params['search'],
+            'work_mode_query': params['work_mode'],
+            'salary_query':params['salary_range[]'],
+            'location_query':params['location[]'],
+            'role_query': params['role'],
+            'experience_query':params['experience'],
+            'time_range_query':params['time_range'],
             })
 
 @login_required
