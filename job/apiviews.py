@@ -1,4 +1,4 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,permission_classes
 from rest_framework.response import Response
 from .models import Jobs 
 from django.utils import timezone
@@ -6,6 +6,10 @@ from datetime import timedelta
 from django.db.models import Q
 from .serializer import JobSerializer 
 from django.core.paginator import Paginator
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+
 
 @api_view(['GET'])
 def dashboard_api_view(request):
@@ -121,3 +125,40 @@ def dashboard_api_view(request):
             'end_index':end_index,
             'page_number':page_number,
         })
+
+@api_view(['POST'])    
+@permission_classes([IsAuthenticated])
+def create_job_view(request):
+    serializer = JobSerializer(data=request.data)
+    if serializer.is_valid():
+        jobs = serializer.save()
+        return Response(JobSerializer(jobs).data,status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])  
+@permission_classes([IsAuthenticated])  
+def update_job_view(request,id):
+    try:
+        job = Jobs.objects.get(id=id)
+    except Jobs.DoesNotExist:
+        return Response({'detail': 'Job not found'},status=status.HTTP_404_NOT_FOUND)
+    
+    serializer = JobSerializer(job,data=request.data)
+    if serializer.is_valid():
+        jobs = serializer.save()
+        return Response(JobSerializer(jobs).data,status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_job_view(request,id):
+    job = get_object_or_404(Jobs,id=id)
+
+    if request.user != job.employer.user:
+        return Response({'error': 'You do not have permission to delete this job.'}, status=403)
+    
+    job.delete()
+    return Response({'message': 'Job successfully deleted.'}, status=204)
+
