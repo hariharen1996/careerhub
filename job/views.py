@@ -56,8 +56,6 @@ def dashboard_view(request):
         'time_range': request.GET.get('time-range', 0),
     }
 
-    print(params['time_range'])
-
     try:
         response = requests.get(url, params=params)
         response.raise_for_status() 
@@ -90,7 +88,25 @@ def dashboard_view(request):
     except (EmptyPage, InvalidPage):
         page_data = paginator.get_page(1)
 
-    
+    start_index = (page_data.number - 1) * paginator.per_page + 1
+    end_index = start_index + len(page_data) - 1
+    total_jobs = paginator.count 
+    filter_names = []
+
+    if request.GET.get('search'):
+        filter_names.append(f"Search: {request.GET.get('search')}")
+    if request.GET.get('work-mode'):
+        filter_names.append(f"Work Mode: {request.GET.get('work-mode')}")
+    if request.GET.getlist('salary-range[]'):
+        filter_names.append(f"Salary Range: {', '.join(request.GET.getlist('salary-range[]'))}")
+    if request.GET.getlist('locations[]'):
+        filter_names.append(f"Location: {', '.join(request.GET.getlist('locations[]'))}")
+    if request.GET.get('role'):
+        filter_names.append(f"Role: {request.GET.get('role')}")
+    if request.GET.get('experience'):
+        filter_names.append(f"Experience: {request.GET.get('experience')} years")
+    if request.GET.get('time-range'):
+        filter_names.append(f"Time Range: {request.GET.get('time-range')} days")
 
     
     roles = ['Software Development', 'Software Testing', 'Devops', 'Machine Learning', 'Business Development']
@@ -113,6 +129,10 @@ def dashboard_view(request):
             'role_query': params['role'],
             'experience_query':params['experience'],
             'time_range_query':params['time_range'],
+            'filter_names':filter_names,
+            'start_index':start_index,
+            'end_index':end_index,
+            'total_job':total_jobs
             })
 
 @login_required

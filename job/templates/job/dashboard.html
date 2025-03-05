@@ -118,6 +118,17 @@
             </div>
         </form>
     </div>
+    <article class="job-count mt-3 m-2">
+        <p class="fw-bold"> {{ start_index }} - {{ end_index }} of {{ total_jobs }} jobs | 
+            {% if filter_names %}
+                {% for filter_names in filter_names %}
+                    {{ filter_names }} {% if not forloop.last %} {% endif %}
+                {% endfor %}
+            {% else %}
+                No filters applied
+            {% endif %}
+        </p>
+    </article>
     <div class="job-container mt-3 mb-3">
         {% for result in jobs %}
         <div class="m-2 card shadow border border-dark  p-3">

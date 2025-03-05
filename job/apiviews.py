@@ -27,15 +27,20 @@ def dashboard_api_view(request):
    
     jobs = Jobs.objects.all()
 
+    filter_names = []
+
     if search_query:
         jobs = Jobs.objects.filter(
             Q(title__icontains=search_query) | 
             Q(location__icontains=search_query) | 
             Q(job_skills__icontains=search_query)
         ).distinct()
+        filter_names.append(f'{search_query}')
 
     if work_mode_query:
         jobs = jobs.filter(work_mode=work_mode_query)
+        filter_names.append(f'{work_mode_query}')
+   
 
     if salary_query:
         salary = Q()
@@ -55,6 +60,9 @@ def dashboard_api_view(request):
         
         if salary:
             jobs = jobs.filter(salary)
+        filter_names.append(f'{", ".join(salary_query)}')
+    
+   
     
     if location_query:
         location_filter = Q()
@@ -63,9 +71,12 @@ def dashboard_api_view(request):
             for loc in location_query:
                 location_filter |= Q(location__icontains=loc)
         jobs = jobs.filter(location_filter)
-
+        filter_names.append(f'{", ".join(location_query)}')
+    
+   
     if role_query:
         jobs = jobs.filter(role__icontains=role_query)
+        filter_names.append(f'{role_query}')
 
     if experience_query:
         experience = int(experience_query)
@@ -81,8 +92,8 @@ def dashboard_api_view(request):
             jobs = jobs.filter(experience='7-10')
         else:
             jobs = jobs.filter(experience='10+')
+        filter_names.append(f'{experience_query} years')
     
-
     if time_range_query:
         try:
             time_range_query = int(time_range_query)
@@ -105,6 +116,7 @@ def dashboard_api_view(request):
             jobs = jobs.filter(posted_time__gte=time_limit)
         except ValueError:
             pass
+        filter_names.append(f'{time_range_query} days')
 
     if not page_number:
         serializer = JobSerializer(jobs,many=True)
@@ -116,6 +128,7 @@ def dashboard_api_view(request):
         page_data = paginator.get_page(page_number)
         start_index = page_data.start_index()
         end_index = page_data.end_index()
+        total_jobs = paginator.count
 
         serializer = JobSerializer(page_data,many=True)
         
@@ -124,6 +137,8 @@ def dashboard_api_view(request):
             'start_index':start_index,
             'end_index':end_index,
             'page_number':page_number,
+            'total_jobs':total_jobs,
+            'filter_names':filter_names
         })
 
 @api_view(['POST'])    
