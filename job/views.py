@@ -14,8 +14,10 @@ import requests
 from django.core.paginator import Paginator,EmptyPage,InvalidPage
 from typing import List,Optional,Dict
 import logging
-
-
+from django.views.generic import CreateView,UpdateView,DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+from django.urls import reverse_lazy
 
 logger = logging.getLogger(__name__)
 
@@ -161,188 +163,230 @@ def employer_view(request: HttpRequest) -> HttpResponse:
         form = EmployerProfileForm(instance=employer_profile)
     return render(request,'job/employer.html',{'form':form,'title':'EmployerProfileForm'})
 
+class CreateJobsView(LoginRequiredMixin,CreateView):
+    model = Jobs
+    form_class = JobForm
+    template_name = 'job/create_job.html'
+    context_object_name = 'form'
 
-@login_required
-def create_jobs_view(request):
-    if request.user.user_type == 'APPLICANT':
-        return redirect('job-home')
+    def get_context_data(self, **kwargs) -> dict:
+        context_title = super().get_context_data(**kwargs)
+        context_title['title'] = 'Job Form'
+        return context_title
     
-    if not EmployerProfile.objects.filter(user=request.user).exists():
-        messages.warning(request, "You need to create an employer profile before posting jobs.")
-        return redirect('job-home')
-
-    if request.method == 'POST':
-        form = JobForm(request.POST)
-        if form.is_valid():
-            employer = EmployerProfile.objects.get(user=request.user)
-            company_name = employer.company_name 
-            company_logo = employer.company_logo
-            job_data = form.cleaned_data
-            job_data['employer'] = employer.id 
-            employer_instance = EmployerProfile.objects.get(id=job_data['employer'])
-            job_data['company_name'] = company_name
-            job_data['company_logo'] = company_logo 
-            
-            payload = {
-                'employer':employer_instance.id,
-                'title':job_data['title'],
-                'description': job_data['description'],
-                'location': job_data['location'],
-                'salary_range': job_data['salary_range'],
-                'work_mode': job_data['work_mode'],
-                'experience': job_data['experience'],
-                'application_deadline': job_data['application_deadline'].strftime('%Y-%m-%d'),
-                'role': job_data['role'],
-                'number_of_openings': job_data['number_of_openings'],
-                'status': job_data['status'],
-                'posted_time': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'skills': job_data['job_skills'], 
-                'company_name': company_name,  
-                'company_logo': company_logo.url if company_logo else None  
-            }
-
-            url = 'http://127.0.0.1:8000/api/create/'
-            session = requests.Session()
-            session.cookies.update(requests.utils.cookiejar_from_dict(request.COOKIES))
-            csrf_token = session.cookies.get('csrftoken')
-            
-            if not csrf_token:
-                messages.error(request,'csrf token is missing/invalid')
-                return redirect('dashboard')
-
-            headers = {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrf_token
-            }
-
-            response = session.post(url,json=payload,headers=headers)
-            print(f"responsestatus: {response.status_code}")
-            print(f"responsecontent: {response.content}")
-
-            if response.status_code == 201:
-                messages.success(request,'New Job has been created!')
-                return redirect('dashboard')
-            else:
-                messages.error(request, f"There was an error creating the job: {response.content.decode()}")
+    def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        if request.user.user_type != 'EMPLOYER':
+            messages.warning(request, "You must be an employer to create a job.")
+            return redirect('job-home')
         
-            return redirect('dashboard')      
-    else:
-        form = JobForm()
+        return super().dispatch(request, *args, **kwargs)
     
-    return render(request,'job/create_job.html',{'form':form,'title':'Job Form'})
+    def form_valid(self, form) -> HttpResponse:
+        
+        if self.request.user.user_type == 'APPLICANT':
+            return redirect('job-home')
 
-@login_required
-def update_job_view(request,id):
-    if request.user.user_type == 'APPLICANT':
-        return redirect('job-home')
-    
-    try:
-        job = Jobs.objects.get(id=id)
-    except Jobs.DoesNotExist:
-        messages.error(request,'Job not found')
-        return redirect('job-home')
-    
-    if request.user != job.employer.user:
-        messages.error(request,'You are not allowed to update this job')
-        return redirect('dashboard')
-    
-    if request.method == 'POST':
-        form = JobForm(request.POST,instance=job)
-        if form.is_valid():
-            employer = EmployerProfile.objects.get(user=request.user)
-            job_data = form.cleaned_data
-            job_data['employer'] = employer.id 
-            job_data['company_name'] = employer.company_name
-            job_data['company_logo'] = employer.company_logo
+        if not EmployerProfile.objects.filter(user=self.request.user).exists():
+            messages.warning(self.request, "You need to create an employer profile before posting jobs.")
+            return redirect('job-home')
+
+        employer = EmployerProfile.objects.get(user=self.request.user)
+        company_name = employer.company_name
+        company_logo = employer.company_logo
+        job_data = form.cleaned_data
+        job_data['employer'] = employer.id
+        employer_instance = EmployerProfile.objects.get(id=job_data['employer'])
+        job_data['company_name'] = company_name
+        job_data['company_logo'] = company_logo
+
+        payload = {
+            'employer': employer_instance.id,
+            'title': job_data['title'],
+            'description': job_data['description'],
+            'location': job_data['location'],
+            'salary_range': job_data['salary_range'],
+            'work_mode': job_data['work_mode'],
+            'experience': job_data['experience'],
+            'application_deadline': job_data['application_deadline'].strftime('%Y-%m-%d'),
+            'role': job_data['role'],
+            'number_of_openings': job_data['number_of_openings'],
+            'status': job_data['status'],
+            'posted_time': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'skills': job_data['job_skills'],
+            'company_name': company_name,
+            'company_logo': company_logo.url if company_logo else None
+        }
+
+        url = 'http://127.0.0.1:8000/api/create/'
+        session = requests.Session()
+        session.cookies.update(requests.utils.cookiejar_from_dict(self.request.COOKIES))
+        csrf_token = session.cookies.get('csrftoken')
             
-            job = form.save()
-
-            payload = {
-                'employer': employer.id,
-                'title': job.title,
-                'description': job.description,
-                'location': job.location,
-                'salary_range': job.salary_range,
-                'work_mode': job.work_mode,
-                'experience': job.experience,
-                'application_deadline': job.application_deadline.strftime('%Y-%m-%d'),
-                'role': job.role,
-                'number_of_openings': job.number_of_openings,
-                'status': job.status,
-                'posted_time': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'skills': job.job_skills,
-                'company_name': employer.company_name,
-                'company_logo': employer.company_logo.url if employer.company_logo else None
-            }
-
-            url = f'http://127.0.0.1:8000/api/update/{job.id}/'
-            session = requests.Session()
-            session.cookies.update(requests.utils.cookiejar_from_dict(request.COOKIES))
-            csrf_token = session.cookies.get('csrftoken')
-            
-            if not csrf_token:
-                messages.error(request,'csrf token is missing/invalid')
-                return redirect('dashboard')
-
-            headers = {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrf_token
-            }
-
-            response = session.put(url,json=payload,headers=headers)
-            if response.status_code == 200:
-                messages.success(request,'Job has been updated!')
-                return redirect('dashboard')
-            else:
-                messages.error(request,'There was an error updating job!')
-            
+        if not csrf_token:
+            messages.error(self.request,'csrf token is missing/invalid')
             return redirect('dashboard')
-    else:
-        form = JobForm(instance=job)
-    
-    return render(request,'job/create_job.html',{'form':form,'title':'Update Job Form'})
 
-@login_required
-def delete_job_view(request,id):
-    job = get_object_or_404(Jobs,id=id)
+        headers = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf_token
+        }
 
-    if request.user != job.employer.user:
-        messages.error(request,'You are not allowed to delete this job')
-        return redirect('dashboard')
-    
-    url = f'http://127.0.0.1:8000/api/delete/{job.id}/'
-    session = requests.Session()
-    session.cookies.update(requests.utils.cookiejar_from_dict(request.COOKIES))
-    csrf_token = session.cookies.get('csrftoken')
-            
-    if not csrf_token:
-        messages.error(request,'csrf token is missing/invalid')
-        return redirect('dashboard')
+        response = session.post(url,json=payload,headers=headers)
+        print(f"responsestatus: {response.status_code}")
+        print(f"responsecontent: {response.content}")
 
-    headers = {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrf_token
-    }
-
-    try:
-        response = session.delete(url,headers=headers)
-        if response.status_code == 204:
-            messages.success(request, "Job deleted successfully!")
-        elif response.status_code == 403:
-            messages.error(request,"You do not have permissions to delete this job!")
-        elif response.status_code == 404:
-            messages.error(request,"Job not found!")    
+        if response.status_code == 201:
+            messages.success(self.request,'New Job has been created!')
+            return redirect('dashboard')
         else:
-            messages.error(request, f"There was an error deleting the job: {response.text}")
+            messages.error(self.request.user, f"There was an error creating the job: {response.content.decode()}")
+        
+        return redirect('dashboard')    
 
-    except requests.exceptions.RequestException as e:
-        messages.error(request, f"Request failed: {str(e)}")
+    def form_invalid(self, form) -> HttpResponse:
+        messages.error(self.request, "There was an error submitting the form. Please try again.")
+        return super().form_invalid(form)
+    
+class UpdateJobView(LoginRequiredMixin,UpdateView):
+    model = Jobs
+    form_class = JobForm
+    template_name = 'job/create_job.html'
+    context_object_name = 'form'
 
-    return redirect('dashboard')
+    def get_object(self, queryset: Optional[Jobs] = None) -> Jobs:
+        try:
+            job = Jobs.objects.get(id=self.kwargs['id'])
+            return job
+        except Jobs.DoesNotExist:
+            messages.error(self.request,'Job not found')
+            raise Http404('Job not found')
+    
+    def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        jobid = kwargs.get('id')
+        try:
+            job = Jobs.objects.get(id=jobid)
+            if request.user != job.employer.user:
+                messages.error(request, 'You are not allowed to update this job')
+                return redirect('dashboard')
+        except Jobs.DoesNotExist:
+            messages.error(request, 'Job not found')
+            return redirect('job-home')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs) -> dict:
+        context_title = super().get_context_data(**kwargs)
+        context_title['title'] = 'Update Job Form'
+        return context_title
+    
+    def form_valid(self, form):
+        job = form.save(commit=False)
+        employer = EmployerProfile.objects.get(user=self.request.user)
+
+        if self.request.user != job.employer.user:
+            messages.error(self.request, 'You are not allowed to update this job')
+            return redirect('dashboard')
+        
+        job_data = form.cleaned_data
+        job_data['employer'] = employer.id 
+        job_data['company_name'] = employer.company_name
+        job_data['company_logo'] = employer.company_logo
+    
+    
+        payload = {
+            'employer': employer.id,
+            'title': job.title,
+            'description': job.description,
+            'location': job.location,
+            'salary_range': job.salary_range,
+            'work_mode': job.work_mode,
+            'experience': job.experience,
+            'application_deadline': job.application_deadline.strftime('%Y-%m-%d'),
+            'role': job.role,
+            'number_of_openings': job.number_of_openings,
+            'status': job.status,
+            'posted_time': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'skills': job.job_skills,
+            'company_name': employer.company_name,
+            'company_logo': employer.company_logo.url if employer.company_logo else None
+        }
+
+        url = f'http://127.0.0.1:8000/api/update/{job.id}/'
+        session = requests.Session()
+        session.cookies.update(requests.utils.cookiejar_from_dict(self.request.COOKIES))
+        csrf_token = session.cookies.get('csrftoken')
+        
+        if not csrf_token:
+            messages.error(self.request,'csrf token is missing/invalid')
+            return redirect('dashboard')
+
+        headers = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf_token
+        }
+
+        response = session.put(url,json=payload,headers=headers)
+        if response.status_code == 200:
+            messages.success(self.request,'Job has been updated!')
+            return redirect('dashboard')
+        else:
+            messages.error(self.request,'There was an error updating job!')
+        
+        return redirect('dashboard')
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'There was an error with the form. Please try again.')
+        return super().form_invalid(form)
+
+@method_decorator(login_required,name='dispatch')
+class DeleteJobView(DeleteView):
+    model = Jobs
+    context_object_name = 'jobs'
+    success_url = reverse_lazy('dashboard')
+
+    
+    def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        job = self.get_object()
+        if request.user != job.employer.user:
+            messages.error(request, 'You are not allowed to delete this job')
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def delete(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        job = self.get_object()
+
+        url = f'http://127.0.0.1:8000/api/delete/{job.id}/'
+        session = requests.Session()
+        session.cookies.update(requests.utils.cookiejar_from_dict(request.COOKIES))
+        csrf_token = session.cookies.get('csrftoken')
+
+        if not csrf_token:
+            messages.error(request, 'CSRF token is missing/invalid')
+            return redirect('dashboard')
+
+        headers = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf_token
+        }
+
+        try:
+            response = session.delete(url, headers=headers)
+            if response.status_code == 204:
+                messages.success(request, "Job deleted successfully!")
+            elif response.status_code == 403:
+                messages.error(request, "You do not have permissions to delete this job!")
+            elif response.status_code == 404:
+                messages.error(request, "Job not found!")
+            else:
+                messages.error(request, f"There was an error deleting the job: {response.text}")
+        except requests.exceptions.RequestException as e:
+            messages.error(request, f"Request failed: {str(e)}")
+
+        return redirect(self.success_url)
 
 
 @login_required
-def save_job(request,id):
+def save_job(request: HttpRequest,id: int) -> HttpResponse:
     try:
         job = Jobs.objects.get(id=id)
     except:
@@ -361,20 +405,19 @@ def save_job(request,id):
 
     return redirect('dashboard')
 
-def save_jobs(request):
+def save_jobs(request: HttpRequest) -> HttpResponse:
     saved_jobs = SaveJobs.objects.filter(user=request.user)
     return render(request,'job/save_jobs.html',{'saved_jobs':saved_jobs,'title':'Saved Jobs'})
 
-
 @login_required
-def job_details(request,id):
+def job_details(request: HttpRequest,id: int) -> HttpResponse:
     job = get_object_or_404(Jobs,id=id)
     http_url = request.META.get('HTTP_REFERER','dashboard')
     return render(request,'job/job_details.html',{'title':'Job Details','job':job,'http_url':http_url})
 
 
 @login_required
-def apply_jobs(request,id):
+def apply_jobs(request: HttpRequest,id: int) -> HttpResponse:
     if not request.user.is_authenticated:  
         messages.error(request,"You need to be logged in to apply for job")
         return redirect('job-home')
@@ -441,13 +484,13 @@ def apply_jobs(request,id):
 
 
 @login_required
-def job_applications(request):
+def job_applications(request: HttpRequest) -> HttpResponse:
     jobs = JobApplications.objects.all()
     return render(request,'job/job_applications.html',{'applications':jobs})
 
 
 @login_required
-def update_application_skills(request,id):
+def update_application_skills(request: HttpRequest,id: int) -> HttpResponse:
     if request.user.user_type == 'EMPLOYER':
         return redirect('dashboard')
 
