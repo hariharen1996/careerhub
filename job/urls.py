@@ -16,9 +16,9 @@ urlpatterns = [
     path('job-applications/',views.job_applications,name='job-applications'),
     path('update-application-skills/<int:id>/',views.update_application_skills,name='update-application-skills'),
 
-    path('api/dashboard-api/',apiviews.dashboard_api_view,name='dashboard-api'),
-    path('api/create/', apiviews.create_job_view, name='create-job-api'),
-    path('api/update/<int:id>/', apiviews.update_job_view, name='update-job-api'),
-    path('api/delete/<int:id>/', apiviews.delete_job_view, name='delete-job-api'),
+    path('api/dashboard-api/',apiviews.DashboardApiView.as_view(),name='dashboard-api'),
+    path('api/create/', apiviews.CreateJobView.as_view(), name='create-job-api'),
+    path('api/update/<int:id>/', apiviews.UpdateJobView.as_view(), name='update-job-api'),
+    path('api/delete/<int:id>/', apiviews.DeleteJobView.as_view(), name='delete-job-api'),
    
 ]
