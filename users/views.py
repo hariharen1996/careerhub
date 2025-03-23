@@ -4,9 +4,10 @@ from django.contrib.auth import login,authenticate,logout
 from django.contrib import messages
 from .mixins import RedirectUserMixin
 from django.contrib.auth.views import PasswordResetView,PasswordResetCompleteView,PasswordResetConfirmView,PasswordResetDoneView
+from django.http import HttpRequest,HttpResponse
 
 # Create your views here.
-def register_view(request):
+def register_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect('job-home')
     
@@ -21,7 +22,7 @@ def register_view(request):
 
     return render(request,'users/register.html',{'forms':forms,'title':'Register'})
 
-def login_view(request):
+def login_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect('job-home')
 
@@ -39,12 +40,12 @@ def login_view(request):
         forms = LoginForm()
     return render(request,'users/login.html',{'forms':forms,'title':'Login'})
 
-def logout_view(request):
+def logout_view(request: HttpRequest) -> HttpResponse:
     logout(request)
     messages.warning(request,f"You have been logged out!😕")
     return redirect('login')
 
-def profile_view(request):
+def profile_view(request: HttpRequest) -> HttpResponse:
     if request.user.user_type == 'EMPLOYER':
         return redirect('job-home')
     
