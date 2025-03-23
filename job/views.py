@@ -4,7 +4,7 @@ from .forms import EmployerProfileForm,JobForm,UpdateJobApplicationForm
 from django.contrib import messages
 from .models import EmployerProfile,Jobs,SaveJobs,JobApplications
 from django.utils import timezone 
-from django.http import Http404
+from django.http import Http404,HttpRequest,HttpResponse
 from users.models import ApplicantProfile
 from django.core.mail import send_mail,EmailMessage
 from django.conf import settings
@@ -16,11 +16,12 @@ from typing import List,Optional,Dict
 import logging
 
 
+
 logger = logging.getLogger(__name__)
 
 # Create your views here.
 @login_required
-def home_view(request):
+def home_view(request: HttpRequest) -> HttpResponse:
     return render(request,'job/home.html',{'title':'Home'})
 
 def get_user_profile(user) -> Optional[object]:
@@ -83,7 +84,7 @@ def get_filter_names(request) -> List[str]:
 
 
 @login_required
-def dashboard_view(request):
+def dashboard_view(request) -> render:
     profile = get_user_profile(request.user)
 
     if not check_profile(profile):
@@ -144,20 +145,20 @@ def dashboard_view(request):
             })
 
 @login_required
-def employer_view(request):
+def employer_view(request: HttpRequest) -> HttpResponse:
     if request.user.user_type == 'APPLICANT':
         return redirect('job-home')
+    
+    employer_profile = get_object_or_404(EmployerProfile,user=request.user) if request.user.employerprofile else None
 
     if request.method == 'POST':
-        form = EmployerProfileForm(request.POST,request.FILES,instance=request.user.employerprofile)
+        form = EmployerProfileForm(request.POST,request.FILES,instance=employer_profile)
         if form.is_valid():
-            employer = form.save(commit=False)
-            employer.user = request.user
-            employer.save()
+            form.save()
             messages.success(request,'Employer profile details has been updated!')
             return redirect('dashboard')
     else:
-        form = EmployerProfileForm(instance=request.user.employerprofile)
+        form = EmployerProfileForm(instance=employer_profile)
     return render(request,'job/employer.html',{'form':form,'title':'EmployerProfileForm'})
 
 
