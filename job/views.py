@@ -3,9 +3,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import EmployerProfileForm,JobForm,UpdateJobApplicationForm
 from django.contrib import messages
 from .models import EmployerProfile,Jobs,SaveJobs,JobApplications
-from django.db.models import Q
 from django.utils import timezone 
-from datetime import timedelta
 from django.http import Http404
 from users.models import ApplicantProfile
 from django.core.mail import send_mail,EmailMessage
@@ -14,83 +12,56 @@ import mimetypes
 from django.core.exceptions import ObjectDoesNotExist
 import requests
 from django.core.paginator import Paginator,EmptyPage,InvalidPage
+from typing import List,Optional,Dict
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 @login_required
 def home_view(request):
     return render(request,'job/home.html',{'title':'Home'})
 
-@login_required
-def dashboard_view(request):
-    if request.user.user_type == 'APPLICANT':
-        if hasattr(request.user,'applicantprofile'):
-            applicantprofile = request.user.applicantprofile
-            print(applicantprofile)
-            if not applicantprofile.is_allfields_completed():
-                messages.warning(request,f"Please complete you profile details to access dashboard")
-                return redirect('job-home')
-        else:
-            messages.warning(request,f"Please complete you profile details to access dashboard")
-            return redirect('job-home') 
+def get_user_profile(user) -> Optional[object]:
+    if user.user_type == 'APPLICANT' and hasattr(user, 'applicantprofile'):
+        return user.applicantprofile
+    elif user.user_type == 'EMPLOYER' and hasattr(user, 'employerprofile'):
+        return user.employerprofile
+    return None
 
-    elif request.user.user_type == 'EMPLOYER':
-        if hasattr(request.user,'employerprofile'):
-            employerprofile = request.user.employerprofile
-            print(employerprofile)
-            if not employerprofile.is_allfields_completed():
-                messages.warning(request,f"Please complete you profile details to access dashboard")
-                return redirect('job-home')
-        else:
-            messages.warning(request,f"Please complete you profile details to access dashboard")
-            return redirect('job-home') 
-    
+def check_profile(profile: Optional[object]) -> bool:
+    if profile and not profile.is_allfields_completed():
+        return False
+    return True
+
+def get_job_data(params: Dict[str,List[str]]) -> List[Dict]:
     url = 'http://127.0.0.1:8000/api/dashboard-api/'
-
-    params = {
-        'search':request.GET.get('search',''),
-        'work_mode': request.GET.get('work-mode',''),
-        'salary_range[]': request.GET.getlist('salary-range[]', []),
-        'location[]': request.GET.getlist('locations[]', []),
-        'role': request.GET.get('role', ''),
-        'experience': request.GET.get('experience', ''),
-        'time_range': request.GET.get('time-range', 0),
-    }
 
     try:
         response = requests.get(url, params=params)
-        response.raise_for_status() 
-        api_response = response.json()  
-        job_data = api_response.get('jobs', []) 
-        if params['work_mode']:
-            job_data = [job for job in job_data if job['work_mode'].lower() == params['work_mode'].lower()]
-        if params['salary_range[]']:
-            job_data = [job for job in job_data if job['salary_range'] in params['salary_range[]'] or not params['salary_range[]']]
-        if params['location[]']:
-            job_data = [job for job in job_data if job['location'].lower() in [loc.lower() for loc in params['location[]']] or not params['location[]']]
-           
-        job_data = sorted(job_data,key=lambda x: x['created_at'],reverse=True)
+        response.raise_for_status()
+        api_response = response.json()
+        job_data = api_response.get('jobs', [])
+        return job_data
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data from API: {e}")
-        job_data = []
+        logger.error(f"Error fetching data from API: {e}")
+        return []
     except ValueError as e:
-        print(f"Invalid data received from API: {e}")
-        job_data = []
+        logger.error(f"Invalid data received from API: {e}")
+        return []
 
-   
-    if not job_data:
-        paginator = Paginator([], 5)  
-    else:
-        paginator = Paginator(job_data, 5) 
+def filter_jobs(job_data:List[Dict],params:Dict[str,List[str]]) -> List[Dict]:
+    if params['work_mode']:
+        job_data = [job for job in job_data if job['work_mode'].lower() == params['work_mode'].lower()]
+    if params['salary_range[]']:
+        job_data = [job for job in job_data if job['salary_range'] in params['salary_range[]'] or not params['salary_range[]']]
+    if params['location[]']:
+        job_data = [job for job in job_data if job['location'].lower() in [loc.lower() for loc in params['location[]']] or not params['location[]']]
 
-    page_number = request.GET.get('page')
-    try:
-        page_data = paginator.get_page(page_number)
-    except (EmptyPage, InvalidPage):
-        page_data = paginator.get_page(1)
+    return sorted(job_data, key=lambda x: x['created_at'], reverse=True)
 
-    start_index = (page_data.number - 1) * paginator.per_page + 1
-    end_index = start_index + len(page_data) - 1
-    total_jobs = paginator.count 
+def get_filter_names(request) -> List[str]:
     filter_names = []
 
     if request.GET.get('search'):
@@ -102,18 +73,55 @@ def dashboard_view(request):
     if request.GET.getlist('locations[]'):
         filter_names.append(f"Location: {', '.join(request.GET.getlist('locations[]'))}")
     if request.GET.get('role'):
-        filter_names.append(f"Role: {request.GET.get('role')}")
+         filter_names.append(f"Role: {request.GET.get('role')}")
     if request.GET.get('experience'):
         filter_names.append(f"Experience: {request.GET.get('experience')} years")
     if request.GET.get('time-range'):
         filter_names.append(f"Time Range: {request.GET.get('time-range')} days")
 
-    
-    roles = ['Software Development', 'Software Testing', 'Devops', 'Machine Learning', 'Business Development']
-    locations = ['all', 'chennai', 'bengaluru', 'coimbatore', 'madurai', 'delhi', 'hyderabad']
-    salaries_data = [('0-3', '0-3 Lakhs'), ('3-6', '3-6 Lakhs'), ('6-10', '6-10 Lakhs'), ('10-15', '10-15 Lakhs'), ('15-20', '15-20 Lakhs'), ('20+', '20+ Lakhs')]
+    return filter_names
 
-    saved_job_id = SaveJobs.objects.filter(user=request.user).values_list('job',flat=True)
+
+@login_required
+def dashboard_view(request):
+    profile = get_user_profile(request.user)
+
+    if not check_profile(profile):
+        profile_type = 'applicant' if request.user.user_type == 'APPLICANT' else 'employer'
+        messages.warning(request, f"Please complete your {profile_type} profile details to access dashboard")
+        return redirect('job-home')
+
+    params: Dict[str, List[str]] = {
+        'search': request.GET.get('search', ''),
+        'work_mode': request.GET.get('work-mode', ''),
+        'salary_range[]': request.GET.getlist('salary-range[]', []),
+        'location[]': request.GET.getlist('locations[]', []),
+        'role': request.GET.get('role', ''),
+        'experience': request.GET.get('experience', ''),
+        'time_range': request.GET.get('time-range', 0),
+    }
+
+    job_data = get_job_data(params)
+    job_data = filter_jobs(job_data, params)
+
+    paginator = Paginator(job_data, 5)
+    page_number = request.GET.get('page')
+    try:
+        page_data = paginator.get_page(page_number)
+    except (EmptyPage, InvalidPage):
+        page_data = paginator.get_page(1)
+
+    start_index = (page_data.number - 1) * paginator.per_page + 1
+    end_index = start_index + len(page_data) - 1
+    total_jobs = paginator.count
+
+    filter_names = get_filter_names(request)
+
+    saved_job_id = SaveJobs.objects.filter(user=request.user).values_list('job', flat=True) if request.user.is_authenticated else []
+
+    roles: List[str] = ['Software Development', 'Software Testing', 'Devops', 'Machine Learning', 'Business Development']
+    locations: List[str] = ['all', 'chennai', 'bengaluru', 'coimbatore', 'madurai', 'delhi', 'hyderabad']
+    salaries_data: List[tuple] = [('0-3', '0-3 Lakhs'), ('3-6', '3-6 Lakhs'), ('6-10', '6-10 Lakhs'), ('10-15', '10-15 Lakhs'), ('15-20', '15-20 Lakhs'), ('20+', '20+ Lakhs')]
 
     return render(request,'job/dashboard.html',{
             'title':'Dashboard',
