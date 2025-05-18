@@ -212,7 +212,7 @@ class CreateJobsView(LoginRequiredMixin,CreateView):
             'number_of_openings': job_data['number_of_openings'],
             'status': job_data['status'],
             'posted_time': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'skills': job_data['job_skills'],
+            'job_skills': job_data['job_skills'],
             'company_name': company_name,
             'company_logo': company_logo.url if company_logo else None
         }
@@ -305,7 +305,7 @@ class UpdateJobView(LoginRequiredMixin,UpdateView):
             'number_of_openings': job.number_of_openings,
             'status': job.status,
             'posted_time': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'skills': job.job_skills,
+            'job_skills': job.job_skills,
             'company_name': employer.company_name,
             'company_logo': employer.company_logo.url if employer.company_logo else None
         }

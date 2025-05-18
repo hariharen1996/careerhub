@@ -20,5 +20,4 @@ urlpatterns = [
     path('api/create/', apiviews.CreateJobView.as_view(), name='create-job-api'),
     path('api/update/<int:id>/', apiviews.UpdateJobView.as_view(), name='update-job-api'),
     path('api/delete/<int:id>/', apiviews.DeleteJobView.as_view(), name='delete-job-api'),
-   
 ]
